@@ -2,7 +2,7 @@ Caja del Parador
 
 Caja para cobrar en el parador de los sábados. Se usa desde el celular, anda aunque se caiga el wifi y todo queda guardado en un Google Sheet.
 
-Link de la caja: [COMPLETAR: link de GitHub Pages]
+Link de la caja: https://mtwia.github.io/caja-paradorV2/
 
 Para cobrar (operador)
 
