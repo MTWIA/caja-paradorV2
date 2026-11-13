@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0f0e0c">
-<title>Caja del Parador</title>
+<title>Caja - Parador</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -191,6 +191,33 @@
   .toast.has-undo .undo { display: block; }
   .toast:not(.has-undo) { padding-right: 18px; }
 
+  /* TU CAJA / TOTAL */
+  .box.yo { border-color: rgba(245,200,66,0.45); }
+  .gran-total.suave { background: var(--surface); border: 1px solid rgba(245,200,66,0.45); }
+  .gran-total.suave .gl, .gran-total.suave .gv { color: var(--accent); opacity: 1; }
+  .gran-total .gl small { display: block; font-size: 11px; font-weight: 600; opacity: 0.8; }
+  .actualizado { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .actualizado.error { color: var(--red); }
+  .por-caja { margin-top: 12px; }
+  .pc-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 2px; border-top: 1px solid var(--border); font-size: 14px; }
+  .pc-row .pc-n { font-weight: 600; }
+  .pc-row .pc-n small { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 6px; }
+  .pc-row .pc-v { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.5px; }
+  .pc-row.mia .pc-n { color: var(--accent); }
+  .log-item.mia { box-shadow: inset 3px 0 0 var(--accent); }
+  .tag-vos { color: var(--accent); font-weight: 700; }
+
+  /* ACCIONES AL PIE DE LA CAJA */
+  .acciones { display: grid; gap: 10px; margin-bottom: 14px; }
+  .btn-sec { width: 100%; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 600; }
+  .btn-sec:disabled { opacity: 0.4; }
+  .btn-sec.peligro:hover, .btn-sec.peligro:active { border-color: var(--red); color: var(--red); }
+  .turno-confirm { display: none; background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.3); border-radius: 12px; padding: 14px 16px; text-align: center; margin-bottom: 14px; }
+  .turno-confirm p { font-size: 13px; color: var(--text); margin-bottom: 12px; line-height: 1.5; }
+  .turno-confirm .row { display: flex; gap: 10px; justify-content: center; }
+  .turno-confirm button { padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+  .user-badge.editable { cursor: pointer; }
+
   @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
@@ -198,7 +225,7 @@
 
 <header id="app-header" style="display:none">
   <div>
-    <h1>🍽 Caja del Parador</h1>
+    <h1>🍽 Caja - Parador</h1>
     <div class="user-badge" id="user-badge"></div>
   </div>
   <div class="header-right">
@@ -218,8 +245,8 @@
   <section class="view" id="view-login">
     <div class="login-wrap">
       <form class="login-card" onsubmit="login(event)">
-        <h2>🍽 Caja</h2>
-        <p class="sub">Parador de jóvenes</p>
+        <h2>🍽 Caja - Parador</h2>
+        <p class="sub">Ingresá con tu usuario y PIN</p>
         <div class="msg-info" id="login-info"></div>
         <div class="field">
           <label>Usuario</label>
@@ -231,6 +258,22 @@
         </div>
         <button class="btn-primary" id="btn-login" type="submit">Entrar</button>
         <div class="msg-error" id="login-error"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ NOMBRE DEL OPERADOR ============ -->
+  <section class="view" id="view-nombre">
+    <div class="login-wrap">
+      <form class="login-card" onsubmit="confirmarNombre(event)">
+        <h2>¿Cómo te llamás?</h2>
+        <p class="sub">Así queda registrado quién cobró</p>
+        <div class="field">
+          <label>Tu nombre</label>
+          <input type="text" id="nombre-input" maxlength="24" autocomplete="off" required>
+        </div>
+        <button class="btn-primary" type="submit">Empezar</button>
+        <div class="msg-error" id="nombre-error"></div>
       </form>
     </div>
   </section>
@@ -253,44 +296,51 @@
       </button>
     </div>
 
-    <div class="box">
-      <h2>Unidades vendidas hoy</h2>
-      <table class="ctable">
-        <thead><tr><th></th><th class="col-ef">💵 Efectivo</th><th class="col-mp">💳 MP</th><th class="col-tot">Total</th></tr></thead>
-        <tbody>
-          <tr class="row-menu"><td>🍽 Menús</td>
-            <td class="col-ef"><span class="cell-num" id="u-me">0</span><span class="cell-sub" id="u-me-s">$0</span></td>
-            <td class="col-mp"><span class="cell-num" id="u-mm">0</span><span class="cell-sub" id="u-mm-s">$0</span></td>
-            <td class="col-tot"><span class="cell-num" id="u-mt">0</span><span class="cell-sub" id="u-mt-s">$0</span></td></tr>
-          <tr class="row-beb"><td>🥤 Bebidas</td>
-            <td class="col-ef"><span class="cell-num" id="u-be">0</span><span class="cell-sub" id="u-be-s">$0</span></td>
-            <td class="col-mp"><span class="cell-num" id="u-bm">0</span><span class="cell-sub" id="u-bm-s">$0</span></td>
-            <td class="col-tot"><span class="cell-num" id="u-bt">0</span><span class="cell-sub" id="u-bt-s">$0</span></td></tr>
-          <tr class="row-total"><td>TOTAL</td>
-            <td class="col-ef"><span class="cell-num" id="u-te">0</span><span class="cell-sub" id="u-te-s">$0</span></td>
-            <td class="col-mp"><span class="cell-num" id="u-tm">0</span><span class="cell-sub" id="u-tm-s">$0</span></td>
-            <td class="col-tot"><span class="cell-num" id="u-tt">0</span><span class="cell-sub" id="u-tt-s">$0</span></td></tr>
-        </tbody>
-      </table>
+    <div class="box yo">
+      <h2>🙋 Tu caja · <span id="yo-nombre"></span></h2>
+      <div class="box-body">
+        <div class="res-grid">
+          <div class="stat-card"><div class="s-lbl">🍽 Menús</div><div class="s-tot" id="yo-menus">0</div></div>
+          <div class="stat-card"><div class="s-lbl">🥤 Bebidas</div><div class="s-tot" id="yo-bebidas">0</div></div>
+          <div class="stat-card ef"><div class="s-lbl">💵 Efectivo</div><div class="s-tot" id="yo-ef">$0</div></div>
+          <div class="stat-card mp"><div class="s-lbl">💳 Mercado Pago</div><div class="s-tot" id="yo-mp">$0</div></div>
+        </div>
+        <div class="gran-total suave"><div class="gl">TU TOTAL<small id="yo-n">0 ventas</small></div><div class="gv" id="yo-total">$0</div></div>
+      </div>
     </div>
 
     <div class="box">
-      <h2>Totales del día</h2>
+      <div class="box-head"><h2>👥 Total del parador</h2><span class="actualizado" id="actualizado"></span></div>
       <div class="box-body">
         <div class="res-grid">
-          <div class="stat-card ef"><div class="s-lbl">💵 Efectivo</div><div class="s-tot" id="tot-ef">$0</div><div class="s-cnt" id="cnt-ef">0 ventas</div></div>
-          <div class="stat-card mp"><div class="s-lbl">💳 Mercado Pago</div><div class="s-tot" id="tot-mp">$0</div><div class="s-cnt" id="cnt-mp">0 ventas</div></div>
+          <div class="stat-card"><div class="s-lbl">🍽 Menús</div><div class="s-tot" id="all-menus">0</div></div>
+          <div class="stat-card"><div class="s-lbl">🥤 Bebidas</div><div class="s-tot" id="all-bebidas">0</div></div>
+          <div class="stat-card ef"><div class="s-lbl">💵 Efectivo</div><div class="s-tot" id="all-ef">$0</div></div>
+          <div class="stat-card mp"><div class="s-lbl">💳 Mercado Pago</div><div class="s-tot" id="all-mp">$0</div></div>
         </div>
-        <div class="gran-total"><div class="gl">TOTAL DEL DÍA</div><div class="gv" id="gran-total">$0</div></div>
+        <div class="gran-total"><div class="gl">TOTAL DE TODOS<small id="all-n">0 ventas</small></div><div class="gv" id="all-total">$0</div></div>
+        <div class="por-caja" id="por-caja"></div>
       </div>
     </div>
 
     <div class="box">
       <div class="box-head">
-        <h2>Ventas de hoy (todas las cajas)</h2>
+        <h2>Ventas de hoy</h2>
         <button class="btn-small" onclick="refrescarHoy(true)">↻</button>
       </div>
       <div class="log-list" id="log-list"></div>
+    </div>
+
+    <div class="acciones">
+      <button class="btn-sec" id="btn-subir" onclick="subirAhora()">⬆ Subir ahora</button>
+      <button class="btn-sec peligro" id="btn-turno" onclick="pedirCerrarTurno()" style="display:none">🔄 Cerrar turno y reiniciar</button>
+    </div>
+    <div class="turno-confirm" id="turno-confirm">
+      <p id="turno-resumen"></p>
+      <div class="row">
+        <button id="btn-turno-si" onclick="confirmarCerrarTurno()" style="background:var(--red); color:#fff; border:none;">Sí, cerrar turno</button>
+        <button onclick="cancelarCerrarTurno()" style="background:var(--card); color:var(--muted); border:1px solid var(--border);">Cancelar</button>
+      </div>
     </div>
   </section>
 
@@ -394,6 +444,11 @@ let anulPend = LS.get('cb_anul_pend', []);         // ids a anular que todavía 
 let cacheHoy = LS.get('cb_hoy', { fecha: '', ventas: [] }); // ventas del día confirmadas por el servidor
 let ticket = LS.get('cb_ticket', { menu: 0, bebida: 0 });
 let vistaActual = 'caja';
+
+// Cada celular es una "caja" (una fila). El id se genera una sola vez y queda guardado en el teléfono.
+let MI_CAJA = LS.get('cb_caja_id', null);
+if (!MI_CAJA) { MI_CAJA = 'c-' + nuevoId(); LS.set('cb_caja_id', MI_CAJA); }
+function esMia(v) { return !!v.caja && v.caja === MI_CAJA; }
 const enVuelo = new Set();
 
 function guardarEstado() {
@@ -441,6 +496,7 @@ async function login(ev) {
       usuario: document.getElementById('login-usuario').value.trim(),
       pin: document.getElementById('login-pin').value.trim()
     });
+    sesion.cajero = '';                      // en cada login nuevo se vuelve a pedir el nombre
     LS.set('cb_sesion', sesion);
     document.getElementById('login-pin').value = '';
     entrar();
@@ -452,14 +508,67 @@ async function login(ev) {
 }
 
 function entrar() {
+  if (sesion.rol === 'operador' && !sesion.cajero) { pedirNombre(); return; }
+  iniciarApp();
+}
+
+function iniciarApp() {
   document.getElementById('app-header').style.display = 'flex';
-  document.getElementById('user-badge').textContent = `👤 ${sesion.nombre} · ${sesion.rol}`;
+  const badge = document.getElementById('user-badge');
+  if (sesion.rol === 'operador') {
+    badge.textContent = `👤 ${sesion.cajero} ✎`;
+    badge.classList.add('editable');
+    badge.onclick = cambiarNombre;
+  } else {
+    badge.textContent = `👤 ${sesion.nombre} · ${sesion.rol}`;
+    badge.classList.remove('editable');
+    badge.onclick = null;
+  }
   document.getElementById('tabs').classList.toggle('show', sesion.rol === 'admin');
+  document.getElementById('btn-turno').style.display = sesion.rol === 'admin' ? 'block' : 'none';
   irA('caja');
   renderTodo();
   refrescarConfig();
   refrescarHoy();
   sync();
+}
+
+/* ---------- Nombre del operador ---------- */
+function limpiarNombre(s) {
+  return String(s || '').replace(/[\r\n\t]+/g, ' ').trim().replace(/^[=+\-@]+/, '').trim().slice(0, 24);
+}
+
+function cajeroActual() {
+  return sesion.rol === 'operador' ? (sesion.cajero || sesion.nombre) : sesion.nombre;
+}
+
+function pedirNombre() {
+  document.getElementById('app-header').style.display = 'none';
+  document.getElementById('tabs').classList.remove('show');
+  document.body.classList.remove('en-caja');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-nombre').classList.add('active');
+  document.getElementById('nombre-error').textContent = '';
+  const input = document.getElementById('nombre-input');
+  input.value = LS.get('cb_ultimo_nombre', '');
+  setTimeout(() => input.focus(), 50);
+}
+
+function confirmarNombre(ev) {
+  ev.preventDefault();
+  const n = limpiarNombre(document.getElementById('nombre-input').value);
+  if (n.length < 2) { document.getElementById('nombre-error').textContent = 'Poné tu nombre (mínimo 2 letras)'; return; }
+  sesion.cajero = n;
+  LS.set('cb_sesion', sesion);
+  LS.set('cb_ultimo_nombre', n);
+  iniciarApp();
+}
+
+// Tocar el nombre arriba permite cambiarlo sin cerrar sesión (cambio de turno entre personas)
+function cambiarNombre() {
+  sesion.cajero = '';
+  LS.set('cb_sesion', sesion);
+  pedirNombre();
 }
 
 function mostrarLogin(info) {
@@ -622,7 +731,8 @@ function cobrar(metodo) {
     ts: ahora.toISOString(),
     fecha: fechaAR(ahora),
     hora: horaAR(ahora),
-    cajero: sesion.nombre,
+    cajero: cajeroActual(),
+    caja: MI_CAJA,
     metodo,
     menus: ticket.menu,
     bebidas: ticket.bebida,
@@ -682,37 +792,55 @@ function pedirBorrar(id) {
 function ventasDelDia() {
   const hoy = fechaAR();
   const mapa = new Map();
+  const corte = (cacheHoy.fecha === hoy && cacheHoy.corte) || 0;   // ventas anteriores al último "cerrar turno" no se muestran
   if (cacheHoy.fecha === hoy) cacheHoy.ventas.forEach(v => mapa.set(v.id, Object.assign({}, v)));
-  pendientes.filter(v => v.fecha === hoy).forEach(v => { if (!mapa.has(v.id)) mapa.set(v.id, Object.assign({ _pend: true }, v)); });
+  pendientes.filter(v => v.fecha === hoy && Date.parse(v.ts) >= corte).forEach(v => { if (!mapa.has(v.id)) mapa.set(v.id, Object.assign({ _pend: true }, v)); });
   anulPend.forEach(id => { const v = mapa.get(id); if (v) { v.estado = 'anulada'; v._pend = true; } });
   return [...mapa.values()].sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
 }
 
+function resumir(lista) {
+  const r = { n: 0, menus: 0, bebidas: 0, ef: 0, mp: 0, total: 0 };
+  lista.forEach(v => {
+    r.n++; r.menus += v.menus; r.bebidas += v.bebidas; r.total += v.total;
+    if (v.metodo === 'efectivo') r.ef += v.total; else r.mp += v.total;
+  });
+  return r;
+}
+
+function pintar(pre, r) {
+  document.getElementById(pre + '-menus').textContent = r.menus;
+  document.getElementById(pre + '-bebidas').textContent = r.bebidas;
+  document.getElementById(pre + '-ef').textContent = fmt(r.ef);
+  document.getElementById(pre + '-mp').textContent = fmt(r.mp);
+  document.getElementById(pre + '-total').textContent = fmt(r.total);
+  document.getElementById(pre + '-n').textContent = r.n + ' venta' + (r.n !== 1 ? 's' : '');
+}
+
 function renderCaja() {
   renderLog();
+  if (!sesion) return;
   const activas = ventasDelDia().filter(v => v.estado !== 'anulada');
-  const calc = (tipo, metodo) => {
-    let u = 0, plata = 0;
-    activas.forEach(v => {
-      if (metodo && v.metodo !== metodo) return;
-      if (!tipo || tipo === 'menu') { u += v.menus; plata += v.menus * v.precio_menu; }
-      if (!tipo || tipo === 'bebida') { u += v.bebidas; plata += v.bebidas * v.precio_bebida; }
-    });
-    return [u, plata];
-  };
-  const set = (id, [n, p]) => { document.getElementById(id).textContent = n; document.getElementById(id + '-s').textContent = fmt(p); };
-  set('u-me', calc('menu', 'efectivo')); set('u-mm', calc('menu', 'mp')); set('u-mt', calc('menu'));
-  set('u-be', calc('bebida', 'efectivo')); set('u-bm', calc('bebida', 'mp')); set('u-bt', calc('bebida'));
-  set('u-te', calc(null, 'efectivo')); set('u-tm', calc(null, 'mp')); set('u-tt', calc(null));
+  document.getElementById('yo-nombre').textContent = cajeroActual();
+  pintar('yo', resumir(activas.filter(esMia)));
+  pintar('all', resumir(activas));
 
-  const ef = activas.filter(v => v.metodo === 'efectivo'), mp = activas.filter(v => v.metodo === 'mp');
-  const suma = a => a.reduce((s, v) => s + v.total, 0);
-  const pl = n => n + ' venta' + (n !== 1 ? 's' : '');
-  document.getElementById('tot-ef').textContent = fmt(suma(ef));
-  document.getElementById('cnt-ef').textContent = pl(ef.length);
-  document.getElementById('tot-mp').textContent = fmt(suma(mp));
-  document.getElementById('cnt-mp').textContent = pl(mp.length);
-  document.getElementById('gran-total').textContent = fmt(suma(activas));
+  // Desglose por caja, solo si cobró más de una
+  const grupos = new Map();
+  activas.forEach(v => {   // la lista viene de la más nueva a la más vieja
+    const k = v.caja || ('nombre:' + v.cajero);
+    if (!grupos.has(k)) grupos.set(k, { nombre: v.cajero, mia: esMia(v), lista: [] });
+    grupos.get(k).lista.push(v);
+  });
+  const cont = document.getElementById('por-caja');
+  if (grupos.size < 2) { cont.innerHTML = ''; return; }
+  cont.innerHTML = [...grupos.values()]
+    .map(g => Object.assign(g, resumir(g.lista)))
+    .sort((x, y) => y.total - x.total)
+    .map(g => `<div class="pc-row ${g.mia ? 'mia' : ''}">
+        <span class="pc-n">${esc(g.nombre)}${g.mia ? ' (vos)' : ''}<small>${g.menus} men · ${g.bebidas} beb</small></span>
+        <span class="pc-v">${fmt(g.total)}</span>
+      </div>`).join('');
 }
 
 function describir(v) {
@@ -732,11 +860,12 @@ function renderLog() {
     const pend = v._pend ? ' · <span class="tag-pend">⏳ subiendo</span>' : '';
     const btn = anulada ? '' :
       `<button class="btn-del ${armed ? 'armed' : ''}" onclick="pedirBorrar('${esc(v.id)}')">${armed ? '¿Anular?' : '✕'}</button>`;
-    return `<div class="log-item ${anulada ? 'anulada' : ''}">
+    const mia = esMia(v);
+    return `<div class="log-item ${anulada ? 'anulada' : ''} ${mia ? 'mia' : ''}">
       <div class="log-dot d-${esc(v.metodo)}"></div>
       <div class="log-info">
         <div class="log-tipo">${describir(v)} · ${v.metodo === 'efectivo' ? 'Efectivo' : 'MP'}</div>
-        <div class="log-hora">${esc(v.hora)} · ${esc(v.cajero)}${anulada ? ' · anulada' : ''}${pend}</div>
+        <div class="log-hora">${esc(v.hora)} · ${esc(v.cajero)}${mia ? ' · <span class="tag-vos">vos</span>' : ''}${anulada ? ' · anulada' : ''}${pend}</div>
       </div>
       <div class="log-monto ${esc(v.metodo)}">${fmt(v.total)}</div>
       ${btn}
@@ -744,16 +873,25 @@ function renderLog() {
   }).join('');
 }
 
+let refrescando = false;
 async function refrescarHoy(manual) {
-  if (!sesion) return;
+  if (!sesion || refrescando) return;
+  refrescando = true;
+  const marca = document.getElementById('actualizado');
   try {
-    const ventas = await api('ventasHoy');
-    cacheHoy = { fecha: fechaAR(), ventas };
+    const r = await api('ventasHoy');
+    cacheHoy = { fecha: fechaAR(), corte: r.corte || 0, ventas: r.ventas };
     guardarEstado();
     renderCaja();
+    marca.textContent = 'actualizado ' + horaAR();
+    marca.classList.remove('error');
     if (manual) toast('✓ Actualizado');
   } catch (e) {
+    marca.textContent = '⚠ sin conexión';
+    marca.classList.add('error');
     if (manual) toast('⚠ No se pudo actualizar: ' + e.message);
+  } finally {
+    refrescando = false;
   }
 }
 
@@ -786,15 +924,15 @@ async function sync() {
       lote.forEach(v => enVuelo.add(v.id));
       const r = await api('registrarVentas', {
         ventas: lote.map(v => ({
-          id: v.id, ts: v.ts, metodo: v.metodo, menus: v.menus, bebidas: v.bebidas,
+          id: v.id, ts: v.ts, cajero: v.cajero, caja: v.caja, metodo: v.metodo, menus: v.menus, bebidas: v.bebidas,
           precio_menu: v.precio_menu, precio_bebida: v.precio_bebida
         }))
       });
       const ok = new Set([...r.guardadas, ...r.duplicadas]);
       const rech = new Set(r.rechazadas.map(x => x.id));
-      if (cacheHoy.fecha !== fechaAR()) cacheHoy = { fecha: fechaAR(), ventas: [] };
+      if (cacheHoy.fecha !== fechaAR()) cacheHoy = { fecha: fechaAR(), corte: 0, ventas: [] };
       lote.forEach(v => {
-        if (ok.has(v.id) && v.fecha === cacheHoy.fecha && !cacheHoy.ventas.some(x => x.id === v.id)) {
+        if (ok.has(v.id) && v.fecha === cacheHoy.fecha && Date.parse(v.ts) >= (cacheHoy.corte || 0) && !cacheHoy.ventas.some(x => x.id === v.id)) {
           const copia = Object.assign({}, v); delete copia._pend;
           cacheHoy.ventas.push(copia);
         }
@@ -835,7 +973,9 @@ window.addEventListener('offline', actualizarPill);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && sesion) { sync(); refrescarConfig(); refrescarHoy(); }
 });
-setInterval(() => { if (sesion && vistaActual === 'caja') refrescarHoy(); }, 60000);
+setInterval(() => {
+  if (sesion && vistaActual === 'caja' && document.visibilityState === 'visible') refrescarHoy();
+}, 15000);
 
 /* =========================================================
    ESTADÍSTICAS (admin)
@@ -1068,6 +1208,70 @@ function toast(msg, onUndo) {
 }
 
 function renderTodo() { actualizarPrecios(); renderTicket(); renderCaja(); actualizarPill(); }
+
+/* =========================================================
+   SUBIR AHORA / CERRAR TURNO
+   ========================================================= */
+async function subirAhora() {
+  if (!permitido('subir', 1500)) return;
+  const btn = document.getElementById('btn-subir');
+  if (sincronizando) { toast('Ya se está subiendo, esperá un momento'); return; }
+  btn.disabled = true; btn.textContent = 'Subiendo…';
+  try {
+    espera = 0;
+    clearTimeout(reintento);
+    await sync();
+    await refrescarHoy();
+    const n = pendientes.length + anulPend.length;
+    toast(n ? `⚠ Quedan ${n} sin subir. Revisá la conexión` : '✓ Todo subido, estás al día');
+  } finally {
+    btn.disabled = false; btn.textContent = '⬆ Subir ahora';
+  }
+}
+
+function pedirCerrarTurno() {
+  if (!sesion || sesion.rol !== 'admin') return;
+  const n = pendientes.length + anulPend.length;
+  const activas = ventasDelDia().filter(v => v.estado !== 'anulada');
+  const total = activas.reduce((s, v) => s + v.total, 0);
+  const ef = activas.filter(v => v.metodo === 'efectivo').reduce((s, v) => s + v.total, 0);
+  const si = document.getElementById('btn-turno-si');
+  let txt;
+  if (n) {
+    txt = `Hay ${n} movimiento(s) sin subir en este celular. Tocá "Subir ahora" y cuando diga "Al día" volvé a intentar.`;
+    si.disabled = true; si.style.opacity = '0.4';
+  } else {
+    txt = `Vas a cerrar el turno con ${activas.length} venta(s) y ${fmt(total)} (efectivo ${fmt(ef)}, Mercado Pago ${fmt(total - ef)}). La pantalla de todas las cajas vuelve a cero y el cierre queda guardado en el Sheet. Antes de confirmar, fijate que las demás cajas digan "Al día".`;
+    si.disabled = false; si.style.opacity = '1';
+  }
+  document.getElementById('turno-resumen').textContent = txt;
+  document.getElementById('turno-confirm').style.display = 'block';
+  document.getElementById('btn-turno').style.display = 'none';
+  document.getElementById('turno-confirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelarCerrarTurno() {
+  document.getElementById('turno-confirm').style.display = 'none';
+  document.getElementById('btn-turno').style.display = sesion && sesion.rol === 'admin' ? 'block' : 'none';
+}
+
+async function confirmarCerrarTurno() {
+  if (!permitido('cierre', 3000)) return;
+  const si = document.getElementById('btn-turno-si');
+  si.disabled = true; si.textContent = 'Cerrando…';
+  try {
+    const r = await api('cerrarTurno');
+    cacheHoy = { fecha: fechaAR(), corte: r.corte, ventas: [] };
+    guardarEstado();
+    renderCaja();
+    cancelarCerrarTurno();
+    toast(`✓ Turno cerrado · ${fmt(r.total)} en ${r.ventas} venta(s). Desglose en la hoja Cierres`);
+  } catch (e) {
+    toast('⚠ No se pudo cerrar: ' + e.message);
+  } finally {
+    si.disabled = false; si.textContent = 'Sí, cerrar turno';
+  }
+}
 
 /* ---------- Arranque ---------- */
 if (sesion && sesion.expira && sesion.expira > Date.now()) entrar();
