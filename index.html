@@ -191,6 +191,18 @@
   .toast.has-undo .undo { display: block; }
   .toast:not(.has-undo) { padding-right: 18px; }
 
+  /* CANAL */
+  .canal-btn { background: var(--accent); color: #000; border: none; font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 100px; white-space: nowrap; }
+  .modal-fondo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+  .modal-fondo.show { display: flex; animation: fadeIn 0.15s; }
+  .modal { width: 100%; max-width: 360px; background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 22px 18px; }
+  .modal h3 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; color: var(--accent); text-align: center; }
+  .modal p { font-size: 13px; color: var(--muted); text-align: center; margin: 6px 0 16px; line-height: 1.4; }
+  .canal-opcion { width: 100%; background: var(--surface); border: 2px solid var(--border); color: var(--text); padding: 16px; border-radius: 14px; font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+  .canal-opcion.actual { border-color: var(--accent); color: var(--accent); }
+  .canal-opcion.actual::after { content: '  ✓ estás acá'; font-size: 12px; font-weight: 600; }
+  .chips-canal { margin-top: 2px; }
+
   /* TU CAJA / TOTAL */
   .box.yo { border-color: rgba(245,200,66,0.45); }
   .gran-total.suave { background: var(--surface); border: 1px solid rgba(245,200,66,0.45); }
@@ -229,6 +241,7 @@
     <div class="user-badge" id="user-badge"></div>
   </div>
   <div class="header-right">
+    <button class="canal-btn" id="canal-btn" onclick="abrirCanales()">📡 Canal 1</button>
     <span class="sync-pill ok" id="sync-pill">✓ Al día</span>
     <button class="btn-ghost" onclick="salir()">Salir</button>
   </div>
@@ -310,7 +323,7 @@
     </div>
 
     <div class="box">
-      <div class="box-head"><h2>👥 Total del parador</h2><span class="actualizado" id="actualizado"></span></div>
+      <div class="box-head"><h2>👥 Total · <span id="total-canal">Canal 1</span></h2><span class="actualizado" id="actualizado"></span></div>
       <div class="box-body">
         <div class="res-grid">
           <div class="stat-card"><div class="s-lbl">🍽 Menús</div><div class="s-tot" id="all-menus">0</div></div>
@@ -355,6 +368,12 @@
           <button class="chip" data-rango="30" onclick="rapido('30')">30 días</button>
           <button class="chip" data-rango="mes" onclick="rapido('mes')">Este mes</button>
           <button class="chip" data-rango="todo" onclick="rapido('todo')">Todo</button>
+        </div>
+        <div class="chips chips-canal" id="chips-canal">
+          <button class="chip active" data-fc="todos" onclick="filtrarCanal('todos')">Todos los canales</button>
+          <button class="chip" data-fc="1" onclick="filtrarCanal('1')">Canal 1</button>
+          <button class="chip" data-fc="2" onclick="filtrarCanal('2')">Canal 2</button>
+          <button class="chip" data-fc="3" onclick="filtrarCanal('3')">Canal 3</button>
         </div>
         <div class="filtros">
           <div class="field"><label>Desde</label><input type="date" id="f-desde"></div>
@@ -419,6 +438,17 @@
   </div>
 </div>
 
+<div class="modal-fondo" id="modal-canal" onclick="if (event.target === this) cerrarCanales()">
+  <div class="modal">
+    <h3>📡 Elegí el canal</h3>
+    <p>Las cajas que están en el mismo canal comparten el total. Usá otro canal si hay otro evento cobrando al mismo tiempo.</p>
+    <button class="canal-opcion" data-canal="1" onclick="elegirCanal('1')">Canal 1</button>
+    <button class="canal-opcion" data-canal="2" onclick="elegirCanal('2')">Canal 2</button>
+    <button class="canal-opcion" data-canal="3" onclick="elegirCanal('3')">Canal 3</button>
+    <button class="btn-ghost" style="width:100%;padding:12px;margin-top:4px;" onclick="cerrarCanales()">Cancelar</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span id="toast-msg"></span><button class="undo" id="toast-undo">Deshacer</button></div>
 
 <script>
@@ -449,6 +479,12 @@ let vistaActual = 'caja';
 let MI_CAJA = LS.get('cb_caja_id', null);
 if (!MI_CAJA) { MI_CAJA = 'c-' + nuevoId(); LS.set('cb_caja_id', MI_CAJA); }
 function esMia(v) { return !!v.caja && v.caja === MI_CAJA; }
+
+// Canal elegido en este celular. Las ventas viejas sin canal cuentan como canal 1.
+const CANALES = ['1', '2', '3'];
+let canal = LS.get('cb_canal', '1');
+if (CANALES.indexOf(canal) === -1) canal = '1';
+function canalDe(v) { return CANALES.indexOf(String(v.canal)) === -1 ? '1' : String(v.canal); }
 const enVuelo = new Set();
 
 function guardarEstado() {
@@ -597,7 +633,7 @@ async function salir() {
   try { await api('logout'); } catch (e) {}
   sesion = null;
   LS.del('cb_sesion');
-  cacheHoy = { fecha: '', ventas: [] };
+  cacheHoy = { fecha: '', canal, corte: 0, ventas: [] };
   ticket = { menu: 0, bebida: 0 };
   guardarEstado();
   mostrarLogin();
@@ -733,6 +769,7 @@ function cobrar(metodo) {
     hora: horaAR(ahora),
     cajero: cajeroActual(),
     caja: MI_CAJA,
+    canal,
     metodo,
     menus: ticket.menu,
     bebidas: ticket.bebida,
@@ -792,9 +829,10 @@ function pedirBorrar(id) {
 function ventasDelDia() {
   const hoy = fechaAR();
   const mapa = new Map();
-  const corte = (cacheHoy.fecha === hoy && cacheHoy.corte) || 0;   // ventas anteriores al último "cerrar turno" no se muestran
-  if (cacheHoy.fecha === hoy) cacheHoy.ventas.forEach(v => mapa.set(v.id, Object.assign({}, v)));
-  pendientes.filter(v => v.fecha === hoy && Date.parse(v.ts) >= corte).forEach(v => { if (!mapa.has(v.id)) mapa.set(v.id, Object.assign({ _pend: true }, v)); });
+  const cacheOk = cacheHoy.fecha === hoy && cacheHoy.canal === canal;
+  const corte = (cacheOk && cacheHoy.corte) || 0;   // ventas anteriores al último "cerrar turno" no se muestran
+  if (cacheOk) cacheHoy.ventas.forEach(v => mapa.set(v.id, Object.assign({}, v)));
+  pendientes.filter(v => v.fecha === hoy && canalDe(v) === canal && Date.parse(v.ts) >= corte).forEach(v => { if (!mapa.has(v.id)) mapa.set(v.id, Object.assign({ _pend: true }, v)); });
   anulPend.forEach(id => { const v = mapa.get(id); if (v) { v.estado = 'anulada'; v._pend = true; } });
   return [...mapa.values()].sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
 }
@@ -879,8 +917,10 @@ async function refrescarHoy(manual) {
   refrescando = true;
   const marca = document.getElementById('actualizado');
   try {
-    const r = await api('ventasHoy');
-    cacheHoy = { fecha: fechaAR(), corte: r.corte || 0, ventas: r.ventas };
+    const pedido = canal;
+    const r = await api('ventasHoy', { canal: pedido });
+    if (pedido !== canal) return;   // cambiaron de canal mientras llegaba la respuesta
+    cacheHoy = { fecha: fechaAR(), canal: pedido, corte: r.corte || 0, ventas: r.ventas };
     guardarEstado();
     renderCaja();
     marca.textContent = 'actualizado ' + horaAR();
@@ -924,15 +964,15 @@ async function sync() {
       lote.forEach(v => enVuelo.add(v.id));
       const r = await api('registrarVentas', {
         ventas: lote.map(v => ({
-          id: v.id, ts: v.ts, cajero: v.cajero, caja: v.caja, metodo: v.metodo, menus: v.menus, bebidas: v.bebidas,
+          id: v.id, ts: v.ts, cajero: v.cajero, caja: v.caja, canal: canalDe(v), metodo: v.metodo, menus: v.menus, bebidas: v.bebidas,
           precio_menu: v.precio_menu, precio_bebida: v.precio_bebida
         }))
       });
       const ok = new Set([...r.guardadas, ...r.duplicadas]);
       const rech = new Set(r.rechazadas.map(x => x.id));
-      if (cacheHoy.fecha !== fechaAR()) cacheHoy = { fecha: fechaAR(), corte: 0, ventas: [] };
+      if (cacheHoy.fecha !== fechaAR() || cacheHoy.canal !== canal) cacheHoy = { fecha: fechaAR(), canal, corte: 0, ventas: [] };
       lote.forEach(v => {
-        if (ok.has(v.id) && v.fecha === cacheHoy.fecha && Date.parse(v.ts) >= (cacheHoy.corte || 0) && !cacheHoy.ventas.some(x => x.id === v.id)) {
+        if (ok.has(v.id) && v.fecha === cacheHoy.fecha && canalDe(v) === cacheHoy.canal && Date.parse(v.ts) >= (cacheHoy.corte || 0) && !cacheHoy.ventas.some(x => x.id === v.id)) {
           const copia = Object.assign({}, v); delete copia._pend;
           cacheHoy.ventas.push(copia);
         }
@@ -981,6 +1021,18 @@ setInterval(() => {
    ESTADÍSTICAS (admin)
    ========================================================= */
 let statsData = [];
+let filtroCanal = 'todos';
+
+function datosStats() {
+  return filtroCanal === 'todos' ? statsData : statsData.filter(v => canalDe(v) === filtroCanal);
+}
+
+function filtrarCanal(c) {
+  filtroCanal = c;
+  document.querySelectorAll('#chips-canal .chip').forEach(b => b.classList.toggle('active', b.dataset.fc === c));
+  const d = document.getElementById('f-desde').value, hh = document.getElementById('f-hasta').value;
+  if (statsData.length || document.getElementById('stats-out').innerHTML) renderStats(d, hh);
+}
 
 function rapido(r) {
   const hoy = fechaAR();
@@ -991,7 +1043,7 @@ function rapido(r) {
   if (r === 'todo') desde = '2020-01-01';
   document.getElementById('f-desde').value = desde;
   document.getElementById('f-hasta').value = hoy;
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.rango === r));
+  document.querySelectorAll('#chips .chip').forEach(c => c.classList.toggle('active', c.dataset.rango === r));
   cargarStats();
 }
 
@@ -1023,8 +1075,9 @@ function barras(filas, max, conMonto = true) {
 
 function renderStats(desde, hasta) {
   const out = document.getElementById('stats-out');
-  const activas = statsData.filter(v => v.estado !== 'anulada');
-  const anuladas = statsData.length - activas.length;
+  const datos = datosStats();
+  const activas = datos.filter(v => v.estado !== 'anulada');
+  const anuladas = datos.length - activas.length;
   const total = activas.reduce((s, v) => s + v.total, 0);
   const menus = activas.reduce((s, v) => s + v.menus, 0);
   const bebidas = activas.reduce((s, v) => s + v.bebidas, 0);
@@ -1063,7 +1116,7 @@ function renderStats(desde, hasta) {
     .map(h => ({ lbl: `${h}:00`, valor: horas[h].tickets, extra: fmt(horas[h].total) }));
 
   const maxOf = a => a.reduce((m, f) => Math.max(m, f.valor), 0);
-  const rango = desde === hasta ? fmtFecha(desde) : `${fmtFecha(desde)} al ${fmtFecha(hasta)}`;
+  const rango = desde === hasta ? fmtFecha(desde) : `${fmtFecha(desde)} al ${fmtFecha(hasta)}` + (filtroCanal === 'todos' ? '' : ` · Canal ${filtroCanal}`);
 
   out.innerHTML = `
     <div class="box">
@@ -1090,11 +1143,12 @@ function renderStats(desde, hasta) {
 }
 
 function exportarStats() {
-  if (!statsData.length) { toast('No hay ventas en el período'); return; }
-  const h = 'Fecha,Hora,Cajero,Menús,Bebidas,Precio menú,Precio bebida,Método,Total,Estado\n';
+  const datos = datosStats();
+  if (!datos.length) { toast('No hay ventas en el período'); return; }
+  const h = 'Fecha,Hora,Canal,Cajero,Menús,Bebidas,Precio menú,Precio bebida,Método,Total,Estado\n';
   const csvTxt = s => `"${String(s).replace(/"/g, '""')}"`;
-  const r = [...statsData].sort((a, b) => (a.ts || '').localeCompare(b.ts || '')).map(v =>
-    [v.fecha, v.hora, csvTxt(v.cajero), v.menus, v.bebidas, v.precio_menu, v.precio_bebida,
+  const r = [...datos].sort((a, b) => (a.ts || '').localeCompare(b.ts || '')).map(v =>
+    [v.fecha, v.hora, canalDe(v), csvTxt(v.cajero), v.menus, v.bebidas, v.precio_menu, v.precio_bebida,
      v.metodo === 'efectivo' ? 'Efectivo' : 'Mercado Pago', v.total, v.estado].join(',')).join('\n');
   const blob = new Blob(['﻿' + h + r], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
@@ -1207,7 +1261,34 @@ function toast(msg, onUndo) {
   toastTimer = setTimeout(() => t.classList.remove('show'), onUndo ? 5000 : 2600);
 }
 
-function renderTodo() { actualizarPrecios(); renderTicket(); renderCaja(); actualizarPill(); }
+function renderTodo() { pintarCanal(); actualizarPrecios(); renderTicket(); renderCaja(); actualizarPill(); }
+
+/* ---------- Canal ---------- */
+function pintarCanal() {
+  document.getElementById('canal-btn').textContent = '📡 Canal ' + canal;
+  document.getElementById('total-canal').textContent = 'Canal ' + canal;
+}
+
+function abrirCanales() {
+  document.querySelectorAll('.canal-opcion').forEach(b => b.classList.toggle('actual', b.dataset.canal === canal));
+  document.getElementById('modal-canal').classList.add('show');
+}
+function cerrarCanales() { document.getElementById('modal-canal').classList.remove('show'); }
+
+function elegirCanal(c) {
+  cerrarCanales();
+  if (c === canal) return;
+  canal = c;
+  LS.set('cb_canal', canal);
+  cacheHoy = { fecha: '', canal, corte: 0, ventas: [] };
+  guardarEstado();
+  pintarCanal();
+  renderCaja();
+  cancelarCerrarTurno();
+  document.getElementById('actualizado').textContent = 'cargando…';
+  refrescarHoy();
+  toast('📡 Ahora estás en el canal ' + canal);
+}
 
 /* =========================================================
    SUBIR AHORA / CERRAR TURNO
@@ -1241,7 +1322,7 @@ function pedirCerrarTurno() {
     txt = `Hay ${n} movimiento(s) sin subir en este celular. Tocá "Subir ahora" y cuando diga "Al día" volvé a intentar.`;
     si.disabled = true; si.style.opacity = '0.4';
   } else {
-    txt = `Vas a cerrar el turno con ${activas.length} venta(s) y ${fmt(total)} (efectivo ${fmt(ef)}, Mercado Pago ${fmt(total - ef)}). La pantalla de todas las cajas vuelve a cero y el cierre queda guardado en el Sheet. Antes de confirmar, fijate que las demás cajas digan "Al día".`;
+    txt = `Vas a cerrar el turno del CANAL ${canal} con ${activas.length} venta(s) y ${fmt(total)} (efectivo ${fmt(ef)}, Mercado Pago ${fmt(total - ef)}). Las cajas de este canal vuelven a cero (los otros canales no se tocan) y el cierre queda guardado en el Sheet. Antes de confirmar, fijate que las demás cajas digan "Al día".`;
     si.disabled = false; si.style.opacity = '1';
   }
   document.getElementById('turno-resumen').textContent = txt;
@@ -1260,8 +1341,8 @@ async function confirmarCerrarTurno() {
   const si = document.getElementById('btn-turno-si');
   si.disabled = true; si.textContent = 'Cerrando…';
   try {
-    const r = await api('cerrarTurno');
-    cacheHoy = { fecha: fechaAR(), corte: r.corte, ventas: [] };
+    const r = await api('cerrarTurno', { canal });
+    cacheHoy = { fecha: fechaAR(), canal: r.canal, corte: r.corte, ventas: [] };
     guardarEstado();
     renderCaja();
     cancelarCerrarTurno();
