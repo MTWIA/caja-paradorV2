@@ -16,7 +16,7 @@
   button { touch-action: manipulation; user-select: none; -webkit-user-select: none; font-family: 'DM Sans', sans-serif; cursor: pointer; }
   input, select { font-family: 'DM Sans', sans-serif; }
   body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; padding-bottom: 40px; }
-  body.en-caja { padding-bottom: 300px; }
+  body.en-caja { padding-bottom: 350px; }
 
   /* HEADER */
   header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; gap: 10px; }
@@ -191,6 +191,20 @@
   .toast.has-undo .undo { display: block; }
   .toast:not(.has-undo) { padding-right: 18px; }
 
+  /* TABLA PRODUCTO x MEDIO DE PAGO */
+  .tabla-wrap { margin: -14px -18px 14px; }
+  .ctable.compacta th { padding: 8px 4px; font-size: 9px; }
+  .ctable.compacta td { padding: 9px 4px; }
+  .ctable.compacta td:first-child, .ctable.compacta th:first-child { padding-left: 14px; font-size: 13px; }
+  .ctable.compacta .cell-num { font-size: 21px; }
+  .ctable.compacta .cell-sub { font-size: 10px; }
+  .col-bec .cell-num { color: #c39bff; }
+  .d-becado { background: #c39bff; }
+  .log-monto.becado { color: #c39bff; font-size: 15px; }
+  .btn-becado { width: 100%; margin-top: 8px; background: transparent; border: 1px dashed rgba(195,155,255,0.6); color: #c39bff; border-radius: 12px; padding: 10px; font-size: 13px; font-weight: 700; }
+  .btn-becado:disabled { opacity: 0.25; }
+  .becado-nota { font-size: 12px; color: #c39bff; margin-top: 10px; }
+
   /* CANAL */
   .canal-btn { background: var(--accent); color: #000; border: none; font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 100px; white-space: nowrap; }
   .modal-fondo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
@@ -312,12 +326,7 @@
     <div class="box yo">
       <h2>🙋 Tu caja · <span id="yo-nombre"></span></h2>
       <div class="box-body">
-        <div class="res-grid">
-          <div class="stat-card"><div class="s-lbl">🍽 Menús</div><div class="s-tot" id="yo-menus">0</div></div>
-          <div class="stat-card"><div class="s-lbl">🥤 Bebidas</div><div class="s-tot" id="yo-bebidas">0</div></div>
-          <div class="stat-card ef"><div class="s-lbl">💵 Efectivo</div><div class="s-tot" id="yo-ef">$0</div></div>
-          <div class="stat-card mp"><div class="s-lbl">💳 Mercado Pago</div><div class="s-tot" id="yo-mp">$0</div></div>
-        </div>
+        <div class="tabla-wrap" id="yo-tabla"></div>
         <div class="gran-total suave"><div class="gl">TU TOTAL<small id="yo-n">0 ventas</small></div><div class="gv" id="yo-total">$0</div></div>
       </div>
     </div>
@@ -325,12 +334,7 @@
     <div class="box">
       <div class="box-head"><h2>👥 Total · <span id="total-canal">Canal 1</span></h2><span class="actualizado" id="actualizado"></span></div>
       <div class="box-body">
-        <div class="res-grid">
-          <div class="stat-card"><div class="s-lbl">🍽 Menús</div><div class="s-tot" id="all-menus">0</div></div>
-          <div class="stat-card"><div class="s-lbl">🥤 Bebidas</div><div class="s-tot" id="all-bebidas">0</div></div>
-          <div class="stat-card ef"><div class="s-lbl">💵 Efectivo</div><div class="s-tot" id="all-ef">$0</div></div>
-          <div class="stat-card mp"><div class="s-lbl">💳 Mercado Pago</div><div class="s-tot" id="all-mp">$0</div></div>
-        </div>
+        <div class="tabla-wrap" id="all-tabla"></div>
         <div class="gran-total"><div class="gl">TOTAL DE TODOS<small id="all-n">0 ventas</small></div><div class="gv" id="all-total">$0</div></div>
         <div class="por-caja" id="por-caja"></div>
       </div>
@@ -435,6 +439,7 @@
       <button class="pay-btn pay-ef" id="pay-ef" onclick="cobrar('efectivo')">💵 Efectivo</button>
       <button class="pay-btn pay-mp" id="pay-mp" onclick="cobrar('mp')">💳 Mercado Pago</button>
     </div>
+    <button class="btn-becado" id="pay-bec" onclick="cobrar('becado')">🎁 Becado por la iglesia (no se cobra)</button>
   </div>
 </div>
 
@@ -743,6 +748,7 @@ function renderTicket(animar) {
   document.getElementById('ticket-total').textContent = fmt(total);
   document.getElementById('pay-ef').disabled = !total;
   document.getElementById('pay-mp').disabled = !total;
+  document.getElementById('pay-bec').disabled = !total;
   document.getElementById('btn-vaciar').disabled = !total;
   ['menu', 'bebida'].forEach(t => {
     const b = document.getElementById('badge-' + t);
@@ -775,7 +781,7 @@ function cobrar(metodo) {
     bebidas: ticket.bebida,
     precio_menu: config.precio_menu,
     precio_bebida: config.precio_bebida,
-    total,
+    total: metodo === 'becado' ? 0 : total,
     estado: 'activa'
   };
   pendientes.push(venta);
@@ -784,7 +790,9 @@ function cobrar(metodo) {
   feedback(null, 60);
   renderTicket();
   renderCaja();
-  toast(`${metodo === 'efectivo' ? '💵' : '💳'} ${fmt(total)} cobrado`, () => deshacer(venta.id, venta));
+  const aviso = metodo === 'becado' ? `🎁 Becado registrado (${describir(venta)})`
+    : `${metodo === 'efectivo' ? '💵' : '💳'} ${fmt(total)} cobrado`;
+  toast(aviso, () => deshacer(venta.id, venta));
   sync();
 }
 
@@ -837,22 +845,52 @@ function ventasDelDia() {
   return [...mapa.values()].sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
 }
 
+const METODO_CORTO = { efectivo: 'Efectivo', mp: 'MP', becado: '🎁 Becado' };
+const METODO_LARGO = { efectivo: 'Efectivo', mp: 'Mercado Pago', becado: 'Becado' };
+
+// Cuenta unidades y plata por producto y por medio de pago. Los becados suman unidades pero no plata cobrada.
 function resumir(lista) {
-  const r = { n: 0, menus: 0, bebidas: 0, ef: 0, mp: 0, total: 0 };
+  const vacio = () => ({ efectivo: [0, 0], mp: [0, 0], becado: [0, 0] });
+  const r = { n: 0, bec: 0, menus: 0, bebidas: 0, ef: 0, mp: 0, total: 0, valorBec: 0, t: { menu: vacio(), bebida: vacio() } };
   lista.forEach(v => {
-    r.n++; r.menus += v.menus; r.bebidas += v.bebidas; r.total += v.total;
-    if (v.metodo === 'efectivo') r.ef += v.total; else r.mp += v.total;
+    const m = r.t.menu[v.metodo] ? v.metodo : 'mp';
+    r.n++; r.menus += v.menus; r.bebidas += v.bebidas;
+    r.t.menu[m][0] += v.menus;     r.t.menu[m][1] += v.menus * v.precio_menu;
+    r.t.bebida[m][0] += v.bebidas; r.t.bebida[m][1] += v.bebidas * v.precio_bebida;
+    if (m === 'becado') {
+      r.bec++;
+      r.valorBec += v.menus * v.precio_menu + v.bebidas * v.precio_bebida;
+    } else {
+      r.total += v.total;
+      if (m === 'efectivo') r.ef += v.total; else r.mp += v.total;
+    }
   });
   return r;
 }
 
+function tablaHTML(r) {
+  const celda = (par, cls, beca) => `<td class="${cls}"><span class="cell-num">${par[0]}</span><span class="cell-sub">${beca ? (par[0] ? 'sin cobro' : '—') : fmt(par[1])}</span></td>`;
+  const suma = x => [x.efectivo[0] + x.mp[0] + x.becado[0], x.efectivo[1] + x.mp[1]];
+  const fila = (lbl, cls, x) => `<tr class="${cls}"><td>${lbl}</td>${celda(x.efectivo, 'col-ef')}${celda(x.mp, 'col-mp')}${celda(x.becado, 'col-bec', true)}${celda(suma(x), 'col-tot')}</tr>`;
+  const tot = {};
+  ['efectivo', 'mp', 'becado'].forEach(m => {
+    tot[m] = [r.t.menu[m][0] + r.t.bebida[m][0], r.t.menu[m][1] + r.t.bebida[m][1]];
+  });
+  return `<table class="ctable compacta">
+    <thead><tr><th></th><th class="col-ef">💵 Efect.</th><th class="col-mp">💳 MP</th><th class="col-bec">🎁 Beca</th><th class="col-tot">Total</th></tr></thead>
+    <tbody>
+      ${fila('🍽 Menús', 'row-menu', r.t.menu)}
+      ${fila('🥤 Bebidas', 'row-beb', r.t.bebida)}
+      ${fila('TOTAL', 'row-total', tot)}
+    </tbody></table>`;
+}
+
 function pintar(pre, r) {
-  document.getElementById(pre + '-menus').textContent = r.menus;
-  document.getElementById(pre + '-bebidas').textContent = r.bebidas;
-  document.getElementById(pre + '-ef').textContent = fmt(r.ef);
-  document.getElementById(pre + '-mp').textContent = fmt(r.mp);
+  document.getElementById(pre + '-tabla').innerHTML = tablaHTML(r);
   document.getElementById(pre + '-total').textContent = fmt(r.total);
-  document.getElementById(pre + '-n').textContent = r.n + ' venta' + (r.n !== 1 ? 's' : '');
+  const cob = r.n - r.bec;
+  document.getElementById(pre + '-n').textContent =
+    cob + ' venta' + (cob !== 1 ? 's' : '') + (r.bec ? ` · ${r.bec} becada${r.bec !== 1 ? 's' : ''}` : '');
 }
 
 function renderCaja() {
@@ -902,10 +940,10 @@ function renderLog() {
     return `<div class="log-item ${anulada ? 'anulada' : ''} ${mia ? 'mia' : ''}">
       <div class="log-dot d-${esc(v.metodo)}"></div>
       <div class="log-info">
-        <div class="log-tipo">${describir(v)} · ${v.metodo === 'efectivo' ? 'Efectivo' : 'MP'}</div>
+        <div class="log-tipo">${describir(v)} · ${METODO_CORTO[v.metodo] || 'MP'}</div>
         <div class="log-hora">${esc(v.hora)} · ${esc(v.cajero)}${mia ? ' · <span class="tag-vos">vos</span>' : ''}${anulada ? ' · anulada' : ''}${pend}</div>
       </div>
-      <div class="log-monto ${esc(v.metodo)}">${fmt(v.total)}</div>
+      <div class="log-monto ${esc(v.metodo)}">${v.metodo === 'becado' ? 'BECA' : fmt(v.total)}</div>
       ${btn}
     </div>`;
   }).join('');
@@ -1078,13 +1116,11 @@ function renderStats(desde, hasta) {
   const datos = datosStats();
   const activas = datos.filter(v => v.estado !== 'anulada');
   const anuladas = datos.length - activas.length;
-  const total = activas.reduce((s, v) => s + v.total, 0);
-  const menus = activas.reduce((s, v) => s + v.menus, 0);
-  const bebidas = activas.reduce((s, v) => s + v.bebidas, 0);
-  const ef = activas.filter(v => v.metodo === 'efectivo').reduce((s, v) => s + v.total, 0);
-  const mp = total - ef;
+  const R = resumir(activas);
+  const total = R.total, ef = R.ef, mp = R.mp;
+  const cobradas = R.n - R.bec;
   const pctEf = total ? Math.round(ef / total * 100) : 0;
-  const promedio = activas.length ? Math.round(total / activas.length) : 0;
+  const promedio = cobradas ? Math.round(total / cobradas) : 0;
 
   const agrupar = (clave) => {
     const m = {};
@@ -1124,11 +1160,10 @@ function renderStats(desde, hasta) {
       <div class="box-body">
         <div class="gran-total" style="margin-bottom:12px;"><div class="gl">RECAUDADO</div><div class="gv">${fmt(total)}</div></div>
         <div class="kpi-grid">
-          <div class="stat-card ac"><div class="s-lbl">Ventas</div><div class="s-tot">${activas.length}</div><div class="s-cnt">${anuladas} anulada(s)</div></div>
+          <div class="stat-card ac"><div class="s-lbl">Ventas cobradas</div><div class="s-tot">${cobradas}</div><div class="s-cnt">${anuladas} anulada(s)</div></div>
           <div class="stat-card ac"><div class="s-lbl">Ticket promedio</div><div class="s-tot">${fmt(promedio)}</div></div>
-          <div class="stat-card"><div class="s-lbl">🍽 Menús</div><div class="s-tot">${menus}</div></div>
-          <div class="stat-card"><div class="s-lbl">🥤 Bebidas sueltas</div><div class="s-tot">${bebidas}</div></div>
         </div>
+        ${R.bec ? `<div class="becado-nota">🎁 Becados: ${R.t.menu.becado[0]} menú(s) y ${R.t.bebida.becado[0]} bebida(s), valor ${fmt(R.valorBec)} que aportó la iglesia</div>` : ''}
         <div style="margin-top:14px;">
           <div class="s-lbl" style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;">Medio de pago</div>
           <div class="split"><div class="ef" style="width:${pctEf}%"></div><div class="mp" style="width:${total ? 100 - pctEf : 0}%"></div></div>
@@ -1136,6 +1171,7 @@ function renderStats(desde, hasta) {
         </div>
       </div>
     </div>
+    <div class="box"><h2>Por producto y medio de pago</h2>${tablaHTML(R)}</div>
     <div class="box"><h2>Por día</h2><div class="box-body">${barras(filasDias, maxOf(filasDias))}</div></div>
     <div class="box"><h2>Por cajero</h2><div class="box-body">${barras(filasCaj, maxOf(filasCaj))}</div></div>
     <div class="box"><h2>Ventas por hora</h2><div class="box-body">${barras(filasHoras, maxOf(filasHoras), false)}</div></div>
@@ -1149,7 +1185,7 @@ function exportarStats() {
   const csvTxt = s => `"${String(s).replace(/"/g, '""')}"`;
   const r = [...datos].sort((a, b) => (a.ts || '').localeCompare(b.ts || '')).map(v =>
     [v.fecha, v.hora, canalDe(v), csvTxt(v.cajero), v.menus, v.bebidas, v.precio_menu, v.precio_bebida,
-     v.metodo === 'efectivo' ? 'Efectivo' : 'Mercado Pago', v.total, v.estado].join(',')).join('\n');
+     METODO_LARGO[v.metodo] || 'Mercado Pago', v.total, v.estado].join(',')).join('\n');
   const blob = new Blob(['﻿' + h + r], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
