@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0e0c">
+<title>Caja del Parador</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0c; --surface: #1a1916; --card: #221f1b; --border: #2e2b26;
+    --accent: #f5c842; --accent2: #e8a020; --mp: #009ee3; --green: #2ecc71;
+    --red: #e74c3c; --text: #f0ece4; --muted: #8a8278;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button { touch-action: manipulation; user-select: none; -webkit-user-select: none; font-family: 'DM Sans', sans-serif; cursor: pointer; }
+  input, select { font-family: 'DM Sans', sans-serif; }
+  body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; padding-bottom: 40px; }
+  body.en-caja { padding-bottom: 300px; }
+
+  /* HEADER */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; gap: 10px; }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--accent); line-height: 1; }
+  .user-badge { display: inline-block; background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.25); color: var(--accent); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; margin-top: 4px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .sync-pill { font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 100px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+  .sync-pill.ok { color: var(--green); border-color: rgba(46,204,113,0.4); }
+  .sync-pill.sync { color: var(--accent); border-color: rgba(245,200,66,0.4); }
+  .sync-pill.error { color: var(--red); border-color: rgba(231,76,60,0.5); }
+  .btn-ghost { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 7px 12px; border-radius: 8px; font-size: 12px; }
+
+  .tabs { display: none; gap: 6px; padding: 8px 18px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 61px; z-index: 99; }
+  .tabs.show { display: flex; }
+  .tab { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 9px 6px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+  .tab.active { color: #000; background: var(--accent); border-color: var(--accent); }
+
+  main { padding: 18px; max-width: 560px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn 0.2s; }
+
+  /* LOGIN */
+  .login-wrap { min-height: 78vh; display: flex; align-items: center; justify-content: center; }
+  .login-card { width: 100%; max-width: 360px; background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 26px 22px; }
+  .login-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 2px; color: var(--accent); text-align: center; }
+  .login-card p.sub { text-align: center; color: var(--muted); font-size: 13px; margin: 4px 0 20px; }
+  .field { margin-bottom: 14px; flex: 1; }
+  .field label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; }
+  .field input, .field select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; font-size: 16px; width: 100%; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .btn-primary { width: 100%; background: var(--accent); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 16px; }
+  .btn-primary:disabled { opacity: 0.5; }
+  .msg-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; min-height: 18px; }
+  .msg-info { color: var(--accent); font-size: 12px; text-align: center; margin-bottom: 12px; }
+
+  .alerta { background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: var(--red); text-align: center; }
+
+  /* PRODUCTOS */
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
+  .grid-prod { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+  .prod-btn { position: relative; border: none; border-radius: 18px; padding: 20px 16px; min-height: 140px; text-align: left; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.08s; }
+  .prod-btn:active { transform: scale(0.96); }
+  .prod-btn:disabled { opacity: 0.35; }
+  .prod-btn .ico { font-size: 30px; line-height: 1; }
+  .prod-btn .nombre { font-size: 16px; font-weight: 700; margin-top: 10px; }
+  .prod-btn .precio { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; }
+  .prod-btn .add-hint { font-size: 11px; opacity: 0.7; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .prod-menu { background: linear-gradient(135deg,#2d5a27,#3d7a34); color: #c8f0c2; box-shadow: 0 4px 20px rgba(46,204,113,.2); }
+  .prod-beb { background: linear-gradient(135deg,#5a4a27,#7a6234); color: #f0e0a8; box-shadow: 0 4px 20px rgba(245,200,66,.15); }
+  .qty-badge { position: absolute; top: 10px; right: 10px; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 100px; background: var(--accent); color: #000; font-family: 'Bebas Neue', sans-serif; font-size: 22px; display: none; align-items: center; justify-content: center; }
+  .qty-badge.show { display: flex; }
+  .flash { animation: flash 0.28s ease; }
+  @keyframes flash { 0% { filter: brightness(1.6); } 100% { filter: brightness(1); } }
+  .pop { animation: pop 0.25s ease; }
+  @keyframes pop { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+  /* TICKET */
+  .ticket { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 200; background: var(--surface); border-top: 2px solid var(--accent); box-shadow: 0 -10px 30px rgba(0,0,0,0.5); padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); }
+  body.en-caja .ticket { display: block; }
+  .ticket-inner { max-width: 560px; margin: 0 auto; }
+  .ticket-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .ticket-head h3 { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; color: var(--accent); }
+  .btn-vaciar { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 5px 10px; border-radius: 6px; }
+  .btn-vaciar:disabled { opacity: 0.3; }
+  .ticket-empty { font-size: 13px; color: var(--muted); padding: 10px 0 12px; text-align: center; }
+  .t-line { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .t-name { flex: 1; font-size: 14px; font-weight: 600; }
+  .t-name small { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+  .t-ctrl { display: flex; align-items: center; gap: 6px; }
+  .t-ctrl button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 20px; font-weight: 700; }
+  .t-qty { font-family: 'Bebas Neue', sans-serif; font-size: 26px; min-width: 28px; text-align: center; }
+  .t-sub { font-family: 'Bebas Neue', sans-serif; font-size: 20px; min-width: 76px; text-align: right; color: var(--muted); }
+  .t-total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 8px; }
+  .t-total .l { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .t-total .v { font-family: 'Bebas Neue', sans-serif; font-size: 38px; color: var(--accent); letter-spacing: 1px; line-height: 1; }
+  .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .pay-btn { border: none; border-radius: 14px; padding: 16px 10px; font-size: 16px; font-weight: 700; }
+  .pay-btn:disabled { opacity: 0.25; }
+  .pay-btn:active:not(:disabled) { transform: scale(0.96); }
+  .pay-ef { background: var(--green); color: #052e12; }
+  .pay-mp { background: var(--mp); color: #00253a; }
+
+  /* CAJAS */
+  .box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 18px; }
+  .box > h2, .box-head h2 { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; color: var(--accent); }
+  .box > h2 { padding: 14px 18px 12px; border-bottom: 1px solid var(--border); }
+  .box-head { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); gap: 8px; }
+  .box-body { padding: 14px 18px 18px; }
+
+  .ctable { width: 100%; border-collapse: collapse; }
+  .ctable th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; padding: 9px 10px; text-align: center; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .ctable th:first-child { text-align: left; padding-left: 18px; }
+  .ctable td { padding: 11px 10px; text-align: center; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .ctable td:first-child { text-align: left; padding-left: 18px; font-weight: 600; font-size: 14px; }
+  .ctable tr:last-child td { border-bottom: none; }
+  .cell-num { font-family: 'Bebas Neue', sans-serif; font-size: 24px; line-height: 1; display: block; }
+  .cell-sub { font-size: 11px; color: var(--muted); margin-top: 1px; display: block; }
+  .col-ef .cell-num { color: var(--green); }
+  .col-mp .cell-num { color: var(--mp); }
+  .col-tot .cell-num { color: var(--accent); }
+  .row-menu td:first-child { color: #a8e0a4; }
+  .row-beb td:first-child { color: #f0da98; }
+  .row-total { background: rgba(245,200,66,0.05); }
+  .row-total td:first-child { font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 1px; color: var(--accent); }
+
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat-card .s-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .stat-card .s-cnt { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat-card .s-tot { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 1px; }
+  .stat-card.ef .s-tot { color: var(--green); }
+  .stat-card.mp .s-tot { color: var(--mp); }
+  .stat-card.ac .s-tot { color: var(--accent); }
+  .gran-total { background: linear-gradient(135deg, var(--accent2), var(--accent)); border-radius: 12px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .gran-total .gl { font-size: 13px; font-weight: 700; color: #000; opacity: 0.7; }
+  .gran-total .gv { font-family: 'Bebas Neue', sans-serif; font-size: 34px; color: #000; letter-spacing: 1px; }
+
+  /* LOG */
+  .log-list { max-height: 340px; overflow-y: auto; }
+  .log-empty { padding: 26px; text-align: center; color: var(--muted); font-size: 13px; }
+  .log-item { display: flex; align-items: center; padding: 10px 18px; border-bottom: 1px solid var(--border); gap: 10px; }
+  .log-item:last-child { border-bottom: none; }
+  .log-item.anulada { opacity: 0.4; }
+  .log-item.anulada .log-tipo, .log-item.anulada .log-monto { text-decoration: line-through; }
+  .log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .d-efectivo { background: var(--green); }
+  .d-mp { background: var(--mp); }
+  .log-info { flex: 1; min-width: 0; }
+  .log-tipo { font-size: 13px; font-weight: 500; }
+  .log-hora { font-size: 11px; color: var(--muted); }
+  .tag-pend { color: var(--accent); font-weight: 700; }
+  .log-monto { font-family: 'Bebas Neue', sans-serif; font-size: 19px; }
+  .log-monto.efectivo { color: var(--green); }
+  .log-monto.mp { color: var(--mp); }
+  .btn-del { background: none; border: 1px solid var(--border); color: var(--muted); min-width: 30px; height: 30px; border-radius: 6px; font-size: 12px; padding: 0 6px; flex-shrink: 0; }
+  .btn-del.armed { background: var(--red); border-color: var(--red); color: #fff; font-weight: 700; }
+  .btn-small { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 6px; font-size: 12px; }
+
+  /* ADMIN */
+  .filtros { display: flex; gap: 10px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 7px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+  .chip.active { color: #000; background: var(--accent); border-color: var(--accent); }
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .split { display: flex; height: 12px; border-radius: 100px; overflow: hidden; background: var(--surface); margin: 6px 0 4px; }
+  .split .ef { background: var(--green); }
+  .split .mp { background: var(--mp); }
+  .split-legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .bar-row { display: grid; grid-template-columns: 82px 1fr 92px; gap: 10px; align-items: center; padding: 7px 0; font-size: 13px; }
+  .bar-row .lbl { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-row .lbl small { display: block; color: var(--muted); font-size: 11px; }
+  .bar-track { height: 10px; background: var(--surface); border-radius: 100px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 100px; }
+  .bar-row .val { text-align: right; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.5px; }
+  .bar-row .val small { display: block; font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--muted); }
+  .empty { color: var(--muted); font-size: 13px; text-align: center; padding: 14px 0; }
+  .row-form { display: flex; gap: 10px; align-items: flex-end; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 14px; }
+  .check input { width: 20px; height: 20px; }
+  .user-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+  .user-row:last-child { border-bottom: none; }
+  .user-row .n { font-weight: 600; font-size: 14px; }
+  .user-row .s { font-size: 12px; color: var(--muted); }
+  .rol-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 100px; border: 1px solid var(--border); margin-left: 6px; }
+  .rol-tag.admin { color: var(--accent); border-color: rgba(245,200,66,0.4); }
+
+  /* TOAST */
+  .toast { position: fixed; top: 76px; left: 50%; transform: translateX(-50%) translateY(-12px); background: var(--text); color: #000; padding: 8px 8px 8px 18px; border-radius: 100px; font-weight: 600; font-size: 14px; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999; display: flex; align-items: center; gap: 12px; max-width: 94vw; }
+  .toast span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  .toast .undo { background: #000; color: var(--accent); border: none; border-radius: 100px; padding: 7px 14px; font-weight: 700; font-size: 13px; display: none; flex-shrink: 0; }
+  .toast.has-undo .undo { display: block; }
+  .toast:not(.has-undo) { padding-right: 18px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<header id="app-header" style="display:none">
+  <div>
+    <h1>🍽 Caja del Parador</h1>
+    <div class="user-badge" id="user-badge"></div>
+  </div>
+  <div class="header-right">
+    <span class="sync-pill ok" id="sync-pill">✓ Al día</span>
+    <button class="btn-ghost" onclick="salir()">Salir</button>
+  </div>
+</header>
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-view="caja" onclick="irA('caja')">Caja</button>
+  <button class="tab" data-view="stats" onclick="irA('stats')">Estadísticas</button>
+  <button class="tab" data-view="ajustes" onclick="irA('ajustes')">Ajustes</button>
+</nav>
+
+<main>
+
+  <!-- ============ LOGIN ============ -->
+  <section class="view" id="view-login">
+    <div class="login-wrap">
+      <form class="login-card" onsubmit="login(event)">
+        <h2>🍽 Caja</h2>
+        <p class="sub">Parador de jóvenes</p>
+        <div class="msg-info" id="login-info"></div>
+        <div class="field">
+          <label>Usuario</label>
+          <input type="text" id="login-usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+        </div>
+        <div class="field">
+          <label>PIN</label>
+          <input type="password" id="login-pin" inputmode="numeric" autocomplete="current-password" required>
+        </div>
+        <button class="btn-primary" id="btn-login" type="submit">Entrar</button>
+        <div class="msg-error" id="login-error"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ CAJA ============ -->
+  <section class="view" id="view-caja">
+    <div class="alerta" id="alerta-precio" style="display:none"></div>
+
+    <div class="section-title">TOCÁ PARA AGREGAR AL TICKET</div>
+    <div class="grid-prod">
+      <button class="prod-btn prod-menu" id="btn-menu" onclick="agregar('menu', this)">
+        <span class="qty-badge" id="badge-menu">0</span>
+        <div><div class="ico">🍽</div><div class="nombre">Menú completo</div></div>
+        <div><div class="precio" id="pb-menu">$—</div><div class="add-hint">+1 al ticket</div></div>
+      </button>
+      <button class="prod-btn prod-beb" id="btn-bebida" onclick="agregar('bebida', this)">
+        <span class="qty-badge" id="badge-bebida">0</span>
+        <div><div class="ico">🥤</div><div class="nombre">Solo bebida</div></div>
+        <div><div class="precio" id="pb-bebida">$—</div><div class="add-hint">+1 al ticket</div></div>
+      </button>
+    </div>
+
+    <div class="box">
+      <h2>Unidades vendidas hoy</h2>
+      <table class="ctable">
+        <thead><tr><th></th><th class="col-ef">💵 Efectivo</th><th class="col-mp">💳 MP</th><th class="col-tot">Total</th></tr></thead>
+        <tbody>
+          <tr class="row-menu"><td>🍽 Menús</td>
+            <td class="col-ef"><span class="cell-num" id="u-me">0</span><span class="cell-sub" id="u-me-s">$0</span></td>
+            <td class="col-mp"><span class="cell-num" id="u-mm">0</span><span class="cell-sub" id="u-mm-s">$0</span></td>
+            <td class="col-tot"><span class="cell-num" id="u-mt">0</span><span class="cell-sub" id="u-mt-s">$0</span></td></tr>
+          <tr class="row-beb"><td>🥤 Bebidas</td>
+            <td class="col-ef"><span class="cell-num" id="u-be">0</span><span class="cell-sub" id="u-be-s">$0</span></td>
+            <td class="col-mp"><span class="cell-num" id="u-bm">0</span><span class="cell-sub" id="u-bm-s">$0</span></td>
+            <td class="col-tot"><span class="cell-num" id="u-bt">0</span><span class="cell-sub" id="u-bt-s">$0</span></td></tr>
+          <tr class="row-total"><td>TOTAL</td>
+            <td class="col-ef"><span class="cell-num" id="u-te">0</span><span class="cell-sub" id="u-te-s">$0</span></td>
+            <td class="col-mp"><span class="cell-num" id="u-tm">0</span><span class="cell-sub" id="u-tm-s">$0</span></td>
+            <td class="col-tot"><span class="cell-num" id="u-tt">0</span><span class="cell-sub" id="u-tt-s">$0</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="box">
+      <h2>Totales del día</h2>
+      <div class="box-body">
+        <div class="res-grid">
+          <div class="stat-card ef"><div class="s-lbl">💵 Efectivo</div><div class="s-tot" id="tot-ef">$0</div><div class="s-cnt" id="cnt-ef">0 ventas</div></div>
+          <div class="stat-card mp"><div class="s-lbl">💳 Mercado Pago</div><div class="s-tot" id="tot-mp">$0</div><div class="s-cnt" id="cnt-mp">0 ventas</div></div>
+        </div>
+        <div class="gran-total"><div class="gl">TOTAL DEL DÍA</div><div class="gv" id="gran-total">$0</div></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-head">
+        <h2>Ventas de hoy (todas las cajas)</h2>
+        <button class="btn-small" onclick="refrescarHoy(true)">↻</button>
+      </div>
+      <div class="log-list" id="log-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ ESTADÍSTICAS (admin) ============ -->
+  <section class="view" id="view-stats">
+    <div class="box">
+      <h2>Período</h2>
+      <div class="box-body">
+        <div class="chips" id="chips">
+          <button class="chip active" data-rango="hoy" onclick="rapido('hoy')">Hoy</button>
+          <button class="chip" data-rango="7" onclick="rapido('7')">7 días</button>
+          <button class="chip" data-rango="30" onclick="rapido('30')">30 días</button>
+          <button class="chip" data-rango="mes" onclick="rapido('mes')">Este mes</button>
+          <button class="chip" data-rango="todo" onclick="rapido('todo')">Todo</button>
+        </div>
+        <div class="filtros">
+          <div class="field"><label>Desde</label><input type="date" id="f-desde"></div>
+          <div class="field"><label>Hasta</label><input type="date" id="f-hasta"></div>
+        </div>
+        <button class="btn-primary" id="btn-stats" onclick="cargarStats()">Ver estadísticas</button>
+      </div>
+    </div>
+    <div id="stats-out"></div>
+  </section>
+
+  <!-- ============ AJUSTES (admin) ============ -->
+  <section class="view" id="view-ajustes">
+    <div class="box">
+      <h2>Precios del día</h2>
+      <div class="box-body">
+        <div class="row-form">
+          <div class="field"><label>🍽 Menú ($)</label><input type="number" inputmode="numeric" id="cfg-menu" min="0"></div>
+          <div class="field"><label>🥤 Bebida ($)</label><input type="number" inputmode="numeric" id="cfg-bebida" min="0"></div>
+        </div>
+        <button class="btn-primary" id="btn-cfg" onclick="guardarPrecios()">Guardar precios</button>
+        <p class="s" style="font-size:11px;color:var(--muted);margin-top:10px;">Las ventas ya registradas mantienen el precio con el que se cobraron. Los celulares toman el precio nuevo al refrescar o al volver a la app.</p>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-head"><h2>Usuarios</h2><button class="btn-small" onclick="nuevoUsuario()">+ Nuevo</button></div>
+      <div class="box-body">
+        <div id="lista-usuarios"><div class="empty">Cargando…</div></div>
+      </div>
+    </div>
+
+    <div class="box" id="form-usuario-box" style="display:none">
+      <h2 id="form-usuario-titulo">Nuevo usuario</h2>
+      <div class="box-body">
+        <div class="field"><label>Usuario (para entrar, sin espacios)</label><input type="text" id="fu-usuario" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+        <div class="field"><label>Nombre a mostrar</label><input type="text" id="fu-nombre"></div>
+        <div class="row-form">
+          <div class="field"><label>Rol</label>
+            <select id="fu-rol"><option value="operador">Operador</option><option value="admin">Admin</option></select>
+          </div>
+          <div class="field"><label id="fu-pin-lbl">PIN (4 a 8 dígitos)</label><input type="password" inputmode="numeric" id="fu-pin"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="fu-activo" checked> Activo</label>
+        <button class="btn-primary" id="btn-fu" onclick="guardarUsuario()">Guardar usuario</button>
+        <button class="btn-ghost" style="width:100%;margin-top:8px;padding:12px;" onclick="cerrarFormUsuario()">Cancelar</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- TICKET FIJO (solo en Caja) -->
+<div class="ticket">
+  <div class="ticket-inner">
+    <div class="ticket-head"><h3>🧾 Ticket actual</h3><button class="btn-vaciar" id="btn-vaciar" onclick="vaciarTicket()">Vaciar</button></div>
+    <div id="ticket-lines"></div>
+    <div class="t-total"><span class="l">TOTAL A COBRAR</span><span class="v" id="ticket-total">$0</span></div>
+    <div class="pay-row">
+      <button class="pay-btn pay-ef" id="pay-ef" onclick="cobrar('efectivo')">💵 Efectivo</button>
+      <button class="pay-btn pay-mp" id="pay-mp" onclick="cobrar('mp')">💳 Mercado Pago</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span><button class="undo" id="toast-undo">Deshacer</button></div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN: pegá acá la URL del deploy de Apps Script (termina en /exec)
+   ========================================================= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbz923O84CrtA2KOTiIGtxps6TTFPi42Yzn_8fUSkFKJqGrldNPFQP-kFIC7Uk5hf412IQ/exec';
+
+const TZ = 'America/Argentina/Buenos_Aires';
+
+/* ---------- Storage seguro ---------- */
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+
+/* ---------- Estado ---------- */
+let sesion = LS.get('cb_sesion', null);
+let config = LS.get('cb_config', { precio_menu: 0, precio_bebida: 0 });
+let pendientes = LS.get('cb_pendientes', []);      // ventas cobradas que todavía no llegaron al Sheet
+let anulPend = LS.get('cb_anul_pend', []);         // ids a anular que todavía no llegaron al Sheet
+let cacheHoy = LS.get('cb_hoy', { fecha: '', ventas: [] }); // ventas del día confirmadas por el servidor
+let ticket = LS.get('cb_ticket', { menu: 0, bebida: 0 });
+let vistaActual = 'caja';
+const enVuelo = new Set();
+
+function guardarEstado() {
+  LS.set('cb_pendientes', pendientes);
+  LS.set('cb_anul_pend', anulPend);
+  LS.set('cb_hoy', cacheHoy);
+  LS.set('cb_ticket', ticket);
+}
+
+/* ---------- API ---------- */
+async function api(action, data = {}) {
+  if (!/^https:\/\//.test(API_URL)) throw new Error('Falta configurar API_URL en index.html');
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action, token: sesion ? sesion.token : null }, data))
+  });
+  if (!res.ok) throw new Error('Error de red (' + res.status + ')');
+  const j = await res.json();
+  if (!j.ok) {
+    if (j.error === 'SESION_INVALIDA') sesionVencida();
+    const e = new Error(j.error);
+    e.servidor = true;
+    throw e;
+  }
+  return j.data;
+}
+
+/* ---------- Fechas ---------- */
+function fechaAR(d = new Date()) { return d.toLocaleDateString('sv-SE', { timeZone: TZ }); }
+function horaAR(d = new Date()) { return d.toLocaleTimeString('es-AR', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }); }
+function sumarDias(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+
+/* =========================================================
+   LOGIN / NAVEGACIÓN
+   ========================================================= */
+async function login(ev) {
+  ev.preventDefault();
+  const btn = document.getElementById('btn-login');
+  const err = document.getElementById('login-error');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  try {
+    sesion = await api('login', {
+      usuario: document.getElementById('login-usuario').value.trim(),
+      pin: document.getElementById('login-pin').value.trim()
+    });
+    LS.set('cb_sesion', sesion);
+    document.getElementById('login-pin').value = '';
+    entrar();
+  } catch (e) {
+    err.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+function entrar() {
+  document.getElementById('app-header').style.display = 'flex';
+  document.getElementById('user-badge').textContent = `👤 ${sesion.nombre} · ${sesion.rol}`;
+  document.getElementById('tabs').classList.toggle('show', sesion.rol === 'admin');
+  irA('caja');
+  renderTodo();
+  refrescarConfig();
+  refrescarHoy();
+  sync();
+}
+
+function mostrarLogin(info) {
+  document.getElementById('app-header').style.display = 'none';
+  document.getElementById('tabs').classList.remove('show');
+  document.body.classList.remove('en-caja');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-login').classList.add('active');
+  document.getElementById('login-info').textContent = info || '';
+}
+
+function sesionVencida() {
+  sesion = null;
+  LS.del('cb_sesion');
+  const n = pendientes.length + anulPend.length;
+  mostrarLogin('Tu sesión venció. Volvé a entrar' + (n ? `: hay ${n} movimiento(s) esperando para subir.` : '.'));
+}
+
+async function salir() {
+  const n = pendientes.length + anulPend.length;
+  if (n) {
+    toast(`⚠ Hay ${n} movimiento(s) sin subir. Esperá a que diga "Al día".`);
+    sync();
+    return;
+  }
+  try { await api('logout'); } catch (e) {}
+  sesion = null;
+  LS.del('cb_sesion');
+  cacheHoy = { fecha: '', ventas: [] };
+  ticket = { menu: 0, bebida: 0 };
+  guardarEstado();
+  mostrarLogin();
+}
+
+function irA(vista) {
+  if (vista !== 'caja' && (!sesion || sesion.rol !== 'admin')) vista = 'caja';
+  vistaActual = vista;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + vista).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === vista));
+  document.body.classList.toggle('en-caja', vista === 'caja');
+  window.scrollTo(0, 0);
+  if (vista === 'ajustes') cargarAjustes();
+  if (vista === 'stats' && !document.getElementById('f-desde').value) { rapido('hoy'); }
+}
+
+/* =========================================================
+   CAJA
+   ========================================================= */
+const ultimoToque = {};
+function permitido(clave, ms) {
+  const ahora = Date.now();
+  if (ultimoToque[clave] && ahora - ultimoToque[clave] < ms) return false;
+  ultimoToque[clave] = ahora;
+  return true;
+}
+function feedback(el, ms = 25) {
+  try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+  if (!el) return;
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+
+async function refrescarConfig() {
+  try {
+    config = await api('getConfig');
+    LS.set('cb_config', config);
+  } catch (e) {}
+  actualizarPrecios();
+  renderTicket();
+}
+
+function actualizarPrecios() {
+  const pm = config.precio_menu, pb = config.precio_bebida;
+  const alerta = document.getElementById('alerta-precio');
+  if (!pm) {
+    alerta.style.display = 'block';
+    alerta.textContent = sesion && sesion.rol === 'admin'
+      ? '⚠ Cargá el precio del menú en Ajustes antes de cobrar'
+      : '⚠ Falta el precio del menú. Pedile al admin que lo cargue.';
+  } else {
+    alerta.style.display = 'none';
+  }
+  document.getElementById('pb-menu').textContent = pm ? fmt(pm) : '$—';
+  document.getElementById('pb-bebida').textContent = pb ? fmt(pb) : '$—';
+  document.getElementById('btn-menu').disabled = !pm;
+  document.getElementById('btn-bebida').disabled = !pm || !pb;
+}
+
+function precioDe(tipo) { return tipo === 'menu' ? config.precio_menu : config.precio_bebida; }
+
+function agregar(tipo, el) {
+  if (!permitido('add-' + tipo, 250)) return;
+  if (!precioDe(tipo)) { toast('⚠ Falta configurar el precio'); return; }
+  ticket[tipo]++;
+  guardarEstado();
+  feedback(el);
+  renderTicket(tipo);
+}
+
+function cambiar(tipo, delta) {
+  if (!permitido('chg-' + tipo + delta, 200)) return;
+  ticket[tipo] = Math.max(0, ticket[tipo] + delta);
+  guardarEstado();
+  feedback(null, 15);
+  renderTicket(tipo);
+}
+
+function vaciarTicket() {
+  if (!totalTicket()) return;
+  ticket = { menu: 0, bebida: 0 };
+  guardarEstado();
+  renderTicket();
+  toast('Ticket vaciado');
+}
+
+function totalTicket() { return ticket.menu * config.precio_menu + ticket.bebida * config.precio_bebida; }
+
+const NOMBRES = { menu: 'Menú completo', bebida: 'Solo bebida' };
+
+function renderTicket(animar) {
+  const cont = document.getElementById('ticket-lines');
+  const tipos = ['menu', 'bebida'].filter(t => ticket[t] > 0);
+  cont.innerHTML = !tipos.length
+    ? '<div class="ticket-empty">Tocá un producto para empezar</div>'
+    : tipos.map(t => `
+      <div class="t-line">
+        <div class="t-name">${NOMBRES[t]}<small>${fmt(precioDe(t))} c/u</small></div>
+        <div class="t-ctrl">
+          <button onclick="cambiar('${t}', -1)">−</button>
+          <span class="t-qty ${animar === t ? 'pop' : ''}">${ticket[t]}</span>
+          <button onclick="cambiar('${t}', 1)">+</button>
+        </div>
+        <div class="t-sub">${fmt(ticket[t] * precioDe(t))}</div>
+      </div>`).join('');
+  const total = totalTicket();
+  document.getElementById('ticket-total').textContent = fmt(total);
+  document.getElementById('pay-ef').disabled = !total;
+  document.getElementById('pay-mp').disabled = !total;
+  document.getElementById('btn-vaciar').disabled = !total;
+  ['menu', 'bebida'].forEach(t => {
+    const b = document.getElementById('badge-' + t);
+    b.textContent = ticket[t];
+    b.classList.toggle('show', ticket[t] > 0);
+    if (animar === t) { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  });
+}
+
+function nuevoId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'v' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+}
+
+function cobrar(metodo) {
+  if (!permitido('pay', 800)) return;
+  const total = totalTicket();
+  if (!total) { toast('El ticket está vacío'); return; }
+  const ahora = new Date();
+  const venta = {
+    id: nuevoId(),
+    ts: ahora.toISOString(),
+    fecha: fechaAR(ahora),
+    hora: horaAR(ahora),
+    cajero: sesion.nombre,
+    metodo,
+    menus: ticket.menu,
+    bebidas: ticket.bebida,
+    precio_menu: config.precio_menu,
+    precio_bebida: config.precio_bebida,
+    total,
+    estado: 'activa'
+  };
+  pendientes.push(venta);
+  ticket = { menu: 0, bebida: 0 };
+  guardarEstado();
+  feedback(null, 60);
+  renderTicket();
+  renderCaja();
+  toast(`${metodo === 'efectivo' ? '💵' : '💳'} ${fmt(total)} cobrado`, () => deshacer(venta.id, venta));
+  sync();
+}
+
+// Deshacer desde el toast: anula y devuelve los ítems al ticket
+function deshacer(id, venta) {
+  anular(id);
+  ticket.menu += venta.menus;
+  ticket.bebida += venta.bebidas;
+  guardarEstado();
+  renderTicket();
+  toast('↩ Venta anulada, ítems devueltos al ticket');
+}
+
+function anular(id) {
+  const idx = pendientes.findIndex(v => v.id === id);
+  if (idx !== -1 && !enVuelo.has(id)) {
+    pendientes.splice(idx, 1);            // nunca llegó al Sheet: se descarta y listo
+  } else if (anulPend.indexOf(id) === -1) {
+    anulPend.push(id);                    // ya está (o está llegando) al Sheet: se anula allá
+  }
+  guardarEstado();
+  renderCaja();
+  sync();
+}
+
+let borrarPendiente = null, borrarTimer = null;
+function pedirBorrar(id) {
+  if (borrarPendiente === id) {
+    clearTimeout(borrarTimer);
+    borrarPendiente = null;
+    anular(id);
+    toast('✓ Venta anulada');
+    return;
+  }
+  borrarPendiente = id;
+  renderLog();
+  clearTimeout(borrarTimer);
+  borrarTimer = setTimeout(() => { borrarPendiente = null; renderLog(); }, 3000);
+}
+
+/* Ventas del día = confirmadas por el servidor + pendientes locales, con las anulaciones aplicadas */
+function ventasDelDia() {
+  const hoy = fechaAR();
+  const mapa = new Map();
+  if (cacheHoy.fecha === hoy) cacheHoy.ventas.forEach(v => mapa.set(v.id, Object.assign({}, v)));
+  pendientes.filter(v => v.fecha === hoy).forEach(v => { if (!mapa.has(v.id)) mapa.set(v.id, Object.assign({ _pend: true }, v)); });
+  anulPend.forEach(id => { const v = mapa.get(id); if (v) { v.estado = 'anulada'; v._pend = true; } });
+  return [...mapa.values()].sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+}
+
+function renderCaja() {
+  renderLog();
+  const activas = ventasDelDia().filter(v => v.estado !== 'anulada');
+  const calc = (tipo, metodo) => {
+    let u = 0, plata = 0;
+    activas.forEach(v => {
+      if (metodo && v.metodo !== metodo) return;
+      if (!tipo || tipo === 'menu') { u += v.menus; plata += v.menus * v.precio_menu; }
+      if (!tipo || tipo === 'bebida') { u += v.bebidas; plata += v.bebidas * v.precio_bebida; }
+    });
+    return [u, plata];
+  };
+  const set = (id, [n, p]) => { document.getElementById(id).textContent = n; document.getElementById(id + '-s').textContent = fmt(p); };
+  set('u-me', calc('menu', 'efectivo')); set('u-mm', calc('menu', 'mp')); set('u-mt', calc('menu'));
+  set('u-be', calc('bebida', 'efectivo')); set('u-bm', calc('bebida', 'mp')); set('u-bt', calc('bebida'));
+  set('u-te', calc(null, 'efectivo')); set('u-tm', calc(null, 'mp')); set('u-tt', calc(null));
+
+  const ef = activas.filter(v => v.metodo === 'efectivo'), mp = activas.filter(v => v.metodo === 'mp');
+  const suma = a => a.reduce((s, v) => s + v.total, 0);
+  const pl = n => n + ' venta' + (n !== 1 ? 's' : '');
+  document.getElementById('tot-ef').textContent = fmt(suma(ef));
+  document.getElementById('cnt-ef').textContent = pl(ef.length);
+  document.getElementById('tot-mp').textContent = fmt(suma(mp));
+  document.getElementById('cnt-mp').textContent = pl(mp.length);
+  document.getElementById('gran-total').textContent = fmt(suma(activas));
+}
+
+function describir(v) {
+  const p = [];
+  if (v.menus) p.push(`${v.menus} ${v.menus === 1 ? 'Menú' : 'Menús'}`);
+  if (v.bebidas) p.push(`${v.bebidas} ${v.bebidas === 1 ? 'Bebida' : 'Bebidas'}`);
+  return p.join(' + ');
+}
+
+function renderLog() {
+  const list = document.getElementById('log-list');
+  const ventas = ventasDelDia();
+  if (!ventas.length) { list.innerHTML = '<div class="log-empty">No hay ventas registradas hoy</div>'; return; }
+  list.innerHTML = ventas.map(v => {
+    const anulada = v.estado === 'anulada';
+    const armed = borrarPendiente === v.id;
+    const pend = v._pend ? ' · <span class="tag-pend">⏳ subiendo</span>' : '';
+    const btn = anulada ? '' :
+      `<button class="btn-del ${armed ? 'armed' : ''}" onclick="pedirBorrar('${esc(v.id)}')">${armed ? '¿Anular?' : '✕'}</button>`;
+    return `<div class="log-item ${anulada ? 'anulada' : ''}">
+      <div class="log-dot d-${esc(v.metodo)}"></div>
+      <div class="log-info">
+        <div class="log-tipo">${describir(v)} · ${v.metodo === 'efectivo' ? 'Efectivo' : 'MP'}</div>
+        <div class="log-hora">${esc(v.hora)} · ${esc(v.cajero)}${anulada ? ' · anulada' : ''}${pend}</div>
+      </div>
+      <div class="log-monto ${esc(v.metodo)}">${fmt(v.total)}</div>
+      ${btn}
+    </div>`;
+  }).join('');
+}
+
+async function refrescarHoy(manual) {
+  if (!sesion) return;
+  try {
+    const ventas = await api('ventasHoy');
+    cacheHoy = { fecha: fechaAR(), ventas };
+    guardarEstado();
+    renderCaja();
+    if (manual) toast('✓ Actualizado');
+  } catch (e) {
+    if (manual) toast('⚠ No se pudo actualizar: ' + e.message);
+  }
+}
+
+/* =========================================================
+   SINCRONIZACIÓN (cola offline)
+   ========================================================= */
+let sincronizando = false, reintento = null, espera = 0;
+
+function setSync(estado, texto) {
+  const p = document.getElementById('sync-pill');
+  p.className = 'sync-pill ' + estado;
+  p.textContent = texto;
+}
+
+function actualizarPill() {
+  const n = pendientes.length + anulPend.length;
+  if (!n) setSync('ok', '✓ Al día');
+  else if (!navigator.onLine) setSync('error', `⚠ Sin conexión · ${n}`);
+  else setSync('sync', `⏳ Subiendo ${n}`);
+}
+
+async function sync() {
+  if (!sesion || sincronizando) { actualizarPill(); return; }
+  if (!pendientes.length && !anulPend.length) { actualizarPill(); return; }
+  sincronizando = true;
+  actualizarPill();
+  try {
+    if (pendientes.length) {
+      const lote = pendientes.slice(0, 50);
+      lote.forEach(v => enVuelo.add(v.id));
+      const r = await api('registrarVentas', {
+        ventas: lote.map(v => ({
+          id: v.id, ts: v.ts, metodo: v.metodo, menus: v.menus, bebidas: v.bebidas,
+          precio_menu: v.precio_menu, precio_bebida: v.precio_bebida
+        }))
+      });
+      const ok = new Set([...r.guardadas, ...r.duplicadas]);
+      const rech = new Set(r.rechazadas.map(x => x.id));
+      if (cacheHoy.fecha !== fechaAR()) cacheHoy = { fecha: fechaAR(), ventas: [] };
+      lote.forEach(v => {
+        if (ok.has(v.id) && v.fecha === cacheHoy.fecha && !cacheHoy.ventas.some(x => x.id === v.id)) {
+          const copia = Object.assign({}, v); delete copia._pend;
+          cacheHoy.ventas.push(copia);
+        }
+      });
+      pendientes = pendientes.filter(v => !ok.has(v.id) && !rech.has(v.id));
+      enVuelo.clear();
+      if (r.rechazadas.length) toast(`⚠ ${r.rechazadas.length} venta(s) rechazada(s): ${r.rechazadas[0].motivo}`);
+      guardarEstado();
+    }
+    if (anulPend.length && !pendientes.some(v => anulPend.indexOf(v.id) !== -1)) {
+      const ids = anulPend.slice();
+      const r = await api('anularVentas', { ids });
+      const listos = new Set([...r.anuladas, ...r.noEncontradas, ...r.rechazadas.map(x => x.id)]);
+      r.anuladas.forEach(id => { const v = cacheHoy.ventas.find(x => x.id === id); if (v) v.estado = 'anulada'; });
+      anulPend = anulPend.filter(id => !listos.has(id));
+      if (r.rechazadas.length) toast(`⚠ No se pudo anular: ${r.rechazadas[0].motivo}`);
+      guardarEstado();
+    }
+    espera = 0;
+    sincronizando = false;
+    renderCaja();
+    if (pendientes.length || anulPend.length) return sync();
+    actualizarPill();
+  } catch (e) {
+    enVuelo.clear();
+    sincronizando = false;
+    if (!sesion) return;
+    const n = pendientes.length + anulPend.length;
+    setSync('error', `⚠ Sin subir · ${n}`);
+    espera = Math.min(espera ? espera * 2 : 3000, 60000);
+    clearTimeout(reintento);
+    reintento = setTimeout(sync, espera);
+  }
+}
+
+window.addEventListener('online', () => { espera = 0; sync(); });
+window.addEventListener('offline', actualizarPill);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && sesion) { sync(); refrescarConfig(); refrescarHoy(); }
+});
+setInterval(() => { if (sesion && vistaActual === 'caja') refrescarHoy(); }, 60000);
+
+/* =========================================================
+   ESTADÍSTICAS (admin)
+   ========================================================= */
+let statsData = [];
+
+function rapido(r) {
+  const hoy = fechaAR();
+  let desde = hoy;
+  if (r === '7') desde = sumarDias(hoy, -6);
+  if (r === '30') desde = sumarDias(hoy, -29);
+  if (r === 'mes') desde = hoy.slice(0, 8) + '01';
+  if (r === 'todo') desde = '2020-01-01';
+  document.getElementById('f-desde').value = desde;
+  document.getElementById('f-hasta').value = hoy;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.rango === r));
+  cargarStats();
+}
+
+async function cargarStats() {
+  const desde = document.getElementById('f-desde').value;
+  const hasta = document.getElementById('f-hasta').value;
+  if (!desde || !hasta) { toast('Elegí las dos fechas'); return; }
+  const btn = document.getElementById('btn-stats');
+  btn.disabled = true; btn.textContent = 'Cargando…';
+  try {
+    statsData = await api('ventas', { desde, hasta });
+    renderStats(desde, hasta);
+  } catch (e) {
+    document.getElementById('stats-out').innerHTML = `<div class="alerta">⚠ ${esc(e.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Ver estadísticas';
+  }
+}
+
+function barras(filas, max, conMonto = true) {
+  if (!filas.length) return '<div class="empty">Sin datos en el período</div>';
+  return filas.map(f => `
+    <div class="bar-row">
+      <div class="lbl">${f.lbl}${f.sub ? `<small>${f.sub}</small>` : ''}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${max ? Math.max(2, f.valor / max * 100) : 0}%"></div></div>
+      <div class="val">${conMonto ? fmt(f.valor) : f.valor}${f.extra ? `<small>${f.extra}</small>` : ''}</div>
+    </div>`).join('');
+}
+
+function renderStats(desde, hasta) {
+  const out = document.getElementById('stats-out');
+  const activas = statsData.filter(v => v.estado !== 'anulada');
+  const anuladas = statsData.length - activas.length;
+  const total = activas.reduce((s, v) => s + v.total, 0);
+  const menus = activas.reduce((s, v) => s + v.menus, 0);
+  const bebidas = activas.reduce((s, v) => s + v.bebidas, 0);
+  const ef = activas.filter(v => v.metodo === 'efectivo').reduce((s, v) => s + v.total, 0);
+  const mp = total - ef;
+  const pctEf = total ? Math.round(ef / total * 100) : 0;
+  const promedio = activas.length ? Math.round(total / activas.length) : 0;
+
+  const agrupar = (clave) => {
+    const m = {};
+    activas.forEach(v => {
+      const k = clave(v);
+      m[k] = m[k] || { total: 0, tickets: 0, menus: 0, bebidas: 0 };
+      m[k].total += v.total; m[k].tickets++; m[k].menus += v.menus; m[k].bebidas += v.bebidas;
+    });
+    return m;
+  };
+
+  const dias = agrupar(v => v.fecha);
+  const filasDias = Object.keys(dias).sort().reverse().map(f => {
+    const d = new Date(f + 'T12:00:00');
+    return {
+      lbl: d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }),
+      sub: d.toLocaleDateString('es-AR', { weekday: 'short' }),
+      valor: dias[f].total,
+      extra: `${dias[f].menus} men · ${dias[f].bebidas} beb`
+    };
+  });
+
+  const cajeros = agrupar(v => v.cajero || v.usuario);
+  const filasCaj = Object.keys(cajeros).sort((a, b) => cajeros[b].total - cajeros[a].total)
+    .map(c => ({ lbl: esc(c), valor: cajeros[c].total, extra: `${cajeros[c].tickets} ventas` }));
+
+  const horas = agrupar(v => String(v.hora).slice(0, 2));
+  const filasHoras = Object.keys(horas).sort()
+    .map(h => ({ lbl: `${h}:00`, valor: horas[h].tickets, extra: fmt(horas[h].total) }));
+
+  const maxOf = a => a.reduce((m, f) => Math.max(m, f.valor), 0);
+  const rango = desde === hasta ? fmtFecha(desde) : `${fmtFecha(desde)} al ${fmtFecha(hasta)}`;
+
+  out.innerHTML = `
+    <div class="box">
+      <div class="box-head"><h2>Resumen · ${rango}</h2><button class="btn-small" onclick="exportarStats()">📋 CSV</button></div>
+      <div class="box-body">
+        <div class="gran-total" style="margin-bottom:12px;"><div class="gl">RECAUDADO</div><div class="gv">${fmt(total)}</div></div>
+        <div class="kpi-grid">
+          <div class="stat-card ac"><div class="s-lbl">Ventas</div><div class="s-tot">${activas.length}</div><div class="s-cnt">${anuladas} anulada(s)</div></div>
+          <div class="stat-card ac"><div class="s-lbl">Ticket promedio</div><div class="s-tot">${fmt(promedio)}</div></div>
+          <div class="stat-card"><div class="s-lbl">🍽 Menús</div><div class="s-tot">${menus}</div></div>
+          <div class="stat-card"><div class="s-lbl">🥤 Bebidas sueltas</div><div class="s-tot">${bebidas}</div></div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="s-lbl" style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;">Medio de pago</div>
+          <div class="split"><div class="ef" style="width:${pctEf}%"></div><div class="mp" style="width:${total ? 100 - pctEf : 0}%"></div></div>
+          <div class="split-legend"><span style="color:var(--green)">💵 ${fmt(ef)} · ${pctEf}%</span><span style="color:var(--mp)">💳 ${fmt(mp)} · ${total ? 100 - pctEf : 0}%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="box"><h2>Por día</h2><div class="box-body">${barras(filasDias, maxOf(filasDias))}</div></div>
+    <div class="box"><h2>Por cajero</h2><div class="box-body">${barras(filasCaj, maxOf(filasCaj))}</div></div>
+    <div class="box"><h2>Ventas por hora</h2><div class="box-body">${barras(filasHoras, maxOf(filasHoras), false)}</div></div>
+  `;
+}
+
+function exportarStats() {
+  if (!statsData.length) { toast('No hay ventas en el período'); return; }
+  const h = 'Fecha,Hora,Cajero,Menús,Bebidas,Precio menú,Precio bebida,Método,Total,Estado\n';
+  const csvTxt = s => `"${String(s).replace(/"/g, '""')}"`;
+  const r = [...statsData].sort((a, b) => (a.ts || '').localeCompare(b.ts || '')).map(v =>
+    [v.fecha, v.hora, csvTxt(v.cajero), v.menus, v.bebidas, v.precio_menu, v.precio_bebida,
+     v.metodo === 'efectivo' ? 'Efectivo' : 'Mercado Pago', v.total, v.estado].join(',')).join('\n');
+  const blob = new Blob(['﻿' + h + r], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `caja_${document.getElementById('f-desde').value}_${document.getElementById('f-hasta').value}.csv`;
+  a.click();
+  toast('✓ CSV descargado');
+}
+
+/* =========================================================
+   AJUSTES (admin)
+   ========================================================= */
+let usuariosCache = [];
+
+function cargarAjustes() {
+  document.getElementById('cfg-menu').value = config.precio_menu || '';
+  document.getElementById('cfg-bebida').value = config.precio_bebida || '';
+  cargarUsuarios();
+}
+
+async function guardarPrecios() {
+  const btn = document.getElementById('btn-cfg');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    config = await api('setConfig', {
+      precio_menu: Number(document.getElementById('cfg-menu').value),
+      precio_bebida: Number(document.getElementById('cfg-bebida').value) || 0
+    });
+    LS.set('cb_config', config);
+    actualizarPrecios();
+    renderTicket();
+    toast('✓ Precios guardados');
+  } catch (e) {
+    toast('⚠ ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar precios';
+  }
+}
+
+async function cargarUsuarios() {
+  const cont = document.getElementById('lista-usuarios');
+  try {
+    usuariosCache = await api('listarUsuarios');
+    cont.innerHTML = usuariosCache.length ? usuariosCache.map((u, i) => `
+      <div class="user-row">
+        <div>
+          <div class="n">${esc(u.nombre)}<span class="rol-tag ${u.rol === 'admin' ? 'admin' : ''}">${esc(u.rol)}</span></div>
+          <div class="s">@${esc(u.usuario)}${u.activo ? '' : ' · desactivado'}</div>
+        </div>
+        <button class="btn-small" onclick="editarUsuario(${i})">Editar</button>
+      </div>`).join('') : '<div class="empty">No hay usuarios</div>';
+  } catch (e) {
+    cont.innerHTML = `<div class="empty">⚠ ${esc(e.message)}</div>`;
+  }
+}
+
+function abrirFormUsuario(u) {
+  document.getElementById('form-usuario-box').style.display = 'block';
+  document.getElementById('form-usuario-titulo').textContent = u ? 'Editar usuario' : 'Nuevo usuario';
+  document.getElementById('fu-usuario').value = u ? u.usuario : '';
+  document.getElementById('fu-usuario').disabled = !!u;
+  document.getElementById('fu-nombre').value = u ? u.nombre : '';
+  document.getElementById('fu-rol').value = u ? u.rol : 'operador';
+  document.getElementById('fu-pin').value = '';
+  document.getElementById('fu-pin-lbl').textContent = u ? 'PIN nuevo (vacío = no cambia)' : 'PIN (4 a 8 dígitos)';
+  document.getElementById('fu-activo').checked = u ? u.activo : true;
+  document.getElementById('form-usuario-box').scrollIntoView({ behavior: 'smooth' });
+}
+function nuevoUsuario() { abrirFormUsuario(null); }
+function editarUsuario(i) { abrirFormUsuario(usuariosCache[i]); }
+function cerrarFormUsuario() { document.getElementById('form-usuario-box').style.display = 'none'; }
+
+async function guardarUsuario() {
+  const btn = document.getElementById('btn-fu');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await api('guardarUsuario', { data: {
+      usuario: document.getElementById('fu-usuario').value.trim(),
+      nombre: document.getElementById('fu-nombre').value.trim(),
+      rol: document.getElementById('fu-rol').value,
+      pin: document.getElementById('fu-pin').value.trim(),
+      activo: document.getElementById('fu-activo').checked
+    }});
+    toast('✓ Usuario guardado');
+    cerrarFormUsuario();
+    cargarUsuarios();
+  } catch (e) {
+    toast('⚠ ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar usuario';
+  }
+}
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+function fmt(n) { return '$' + Number(n || 0).toLocaleString('es-AR'); }
+function fmtFecha(iso) { const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+let toastTimer = null;
+function toast(msg, onUndo) {
+  const t = document.getElementById('toast');
+  const btn = document.getElementById('toast-undo');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.toggle('has-undo', !!onUndo);
+  btn.onclick = onUndo ? () => { t.classList.remove('show'); onUndo(); } : null;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), onUndo ? 5000 : 2600);
+}
+
+function renderTodo() { actualizarPrecios(); renderTicket(); renderCaja(); actualizarPill(); }
+
+/* ---------- Arranque ---------- */
+if (sesion && sesion.expira && sesion.expira > Date.now()) entrar();
+else { if (sesion) sesionVencida(); else mostrarLogin(); }
+</script>
+</body>
+</html>
